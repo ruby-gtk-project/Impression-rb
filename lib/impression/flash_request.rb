@@ -6,6 +6,7 @@ require "uri"
 require_relative "device_monitor"
 require_relative "flash_status"
 require_relative "online"
+require_relative "windows_installer"
 
 module Impression
   # FlashRequest writes a disk image to a drive, publishing a FlashStatus the
@@ -43,6 +44,36 @@ module Impression
 
     def cancel = @mutex.synchronize { @running = false }
 
+    # The four members below are what the Windows installer path drives, as
+    # upstream's windows_installer.rs calls set_status, stopped_running and
+    # load_file on FlashRequest itself.
+    def publish(status) = @mutex.synchronize { @status = status }
+
+    def check_running
+      case running?
+      when false
+        raise Cancelled
+      end
+    end
+
+    def cache_dir
+      File.join(
+        ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache")),
+        "impression-rb",
+      )
+    end
+
+    # Copies source_path onto a block device, the destination drive by default
+    # and the installer's partition when the Windows path asks for it.
+    def copy_to_device(source_path, target = device_path)
+      device = open_device(target)
+      File.open(source_path, "rb") do |source|
+        stream(source, device, File.size(source_path))
+      end
+    ensure
+      device&.close
+    end
+
     # Runs the pipeline on its own thread, as upstream spawns it onto the
     # runtime.
     def start = Thread.new { perform }
@@ -65,9 +96,24 @@ module Impression
         check_running
         source_path = prepared_source_path
         check_running
-        copy_to_device(source_path)
+        # A Windows ISO cannot simply be raw-copied: it carries no hybrid boot
+        # record and ships an install.wim larger than FAT32's 4 GiB file limit.
+        # The installer path builds a bootable FAT32 USB for one and answers
+        # false for anything else, so this falls back to a raw byte copy.
+        case try_windows_installer(source_path)
+        when false
+          copy_to_device(source_path)
+        end
         rescan
         eject
+      end
+
+      # The installer path raises libudf's and libwim's own cancellations, which
+      # are this pipeline's Cancelled.
+      def try_windows_installer(source_path)
+        WindowsInstaller.new(request: self, source_path: source_path).flash
+      rescue Udf::Cancelled, Wim::Cancelled
+        raise Cancelled
       end
 
       # Upstream ignores unmount failures: a partition that was never mounted
@@ -164,23 +210,14 @@ module Impression
         [errors, Process.waitpid2(pid).last]
       end
 
-      def copy_to_device(source_path)
-        target = open_device
-        File.open(source_path, "rb") do |source|
-          stream(source, target, File.size(source_path))
-        end
-      ensure
-        target&.close
-      end
-
       # Upstream opens the device through udisks with O_SYNC, so each write
       # commits to the drive before the next one is issued instead of bursting
       # at a marginal stick, and so a sandboxed app needs no device permission
       # of its own.
-      def open_device
+      def open_device(path)
         IO.for_fd(
           Udisks.open_device(
-            device_path,
+            path,
             GLib::Variant.parse("('rw', {'flags': <int32 #{File::SYNC}>})", "(sa{sv})"),
           ),
           "r+b",
@@ -236,24 +273,8 @@ module Impression
 
       def forced_options = GLib::Variant.parse("({'force': <true>},)", "(a{sv})")
 
-      def check_running
-        case running?
-        when false
-          raise Cancelled
-        end
-      end
-
-      def publish(status) = @mutex.synchronize { @status = status }
-
       def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
       def elapsed?(last) = monotonic - last >= REPORT_INTERVAL
-
-      def cache_dir
-        File.join(
-          ENV.fetch("XDG_CACHE_HOME", File.expand_path("~/.cache")),
-          "impression-rb",
-        )
-      end
   end
 end

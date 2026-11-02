@@ -72,6 +72,29 @@
           xorgproto
         ]);
 
+        # The Windows-installer path binds two system libraries through Fiddle
+        # rather than a gem — libudf (from libcdio) to read the UDF filesystem
+        # on a Windows ISO, and libwim (wimlib) to split an oversized
+        # install.wim — exactly as upstream links them. Fiddle resolves them by
+        # soname at runtime, so they go on LD_LIBRARY_PATH rather than
+        # PKG_CONFIG_PATH.
+        nativeLibs = [
+          pkgs.libcdio.lib
+          pkgs.wimlib
+        ];
+
+        libraryPath = pkgs.lib.makeLibraryPath nativeLibs;
+
+        # Building the installer's FAT32 filesystem: upstream does it in-process
+        # with the `fatfs` crate, which has no Ruby equivalent, so the port
+        # formats and fills the staged image file with dosfstools and mtools —
+        # still unmounted, still a plain file, the same way it already shells
+        # out to xzcat for decompression.
+        fatTools = [
+          pkgs.dosfstools
+          pkgs.mtools
+        ];
+
         # ruby-gnome gems build C extensions with extconf.rb + the pkg-config
         # gem; nixpkgs only ships gemConfig entries for the GTK3-era subset, so
         # the GTK4 gems get their build inputs declared here.
@@ -160,6 +183,8 @@
               --add-flags "-I$out/share/Impression/lib" \
               --add-flags "$out/share/Impression/exe/${launcher}" \
               --set GI_TYPELIB_PATH "${typelibPath}" \
+              --prefix LD_LIBRARY_PATH : "${libraryPath}" \
+              --prefix PATH : "${pkgs.lib.makeBinPath fatTools}" \
               --prefix XDG_DATA_DIRS : "$out/share" \
               --prefix XDG_DATA_DIRS : "$out/share/gsettings-schemas/Impression-0.1.0" \
               --prefix XDG_DATA_DIRS : "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}" \
@@ -201,7 +226,11 @@
             pkgs.xvfb-run
             pkgs.gsettings-desktop-schemas
             pkgs.adwaita-icon-theme
-          ] ++ gtkStack;
+            # genisoimage, for test/drive_windows_installer.rb: it builds a real
+            # UDF ISO so the libudf binding is driven against real media rather
+            # than a mock. (xorrisofs cannot write UDF.)
+            pkgs.cdrkit
+          ] ++ gtkStack ++ nativeLibs ++ fatTools;
 
           # Icons, GSettings schemas and the GTK portal all resolve through
           # XDG_DATA_DIRS; without these the window opens with blank icons.
@@ -209,6 +238,7 @@
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS"
             export GI_TYPELIB_PATH="${typelibPath}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
             export RUBYLIB="$PWD/lib''${RUBYLIB:+:$RUBYLIB}"
+            export LD_LIBRARY_PATH="${libraryPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             [ -d data/schemas ] && export GSETTINGS_SCHEMA_DIR="$PWD/data/schemas"
             unset BUNDLE_GEMFILE BUNDLE_FROZEN
             echo "Impression devshell — ruby $(ruby -e 'print RUBY_VERSION')"
