@@ -2,6 +2,8 @@
 
 require "adwaita"
 
+require_relative "i18n"
+
 module Impression
   # DevicePage is the second page: what is being written, which drive it goes
   # to, and the button that starts the write.
@@ -9,6 +11,8 @@ module Impression
   # Ported from upstream's data/resources/blueprints/window.blp (the
   # Adw.NavigationPage tagged device_list).
   class DevicePage
+    include Gettext
+
     def initialize(menu_model:, on_flash:)
       @menu_model = menu_model
       @on_flash = on_flash
@@ -68,7 +72,7 @@ module Impression
     end
 
     def page
-      @page ||= Adwaita::NavigationPage.new(toolbar_view, "Impression").tap do |navigation_page|
+      @page ||= Adwaita::NavigationPage.new(toolbar_view, _("Impression")).tap do |navigation_page|
         navigation_page.tag = "device_list"
       end
     end
@@ -81,7 +85,7 @@ module Impression
       @menu_button ||= Gtk::MenuButton.new.tap do |button|
         button.icon_name = "open-menu-symbolic"
         button.menu_model = @menu_model
-        button.tooltip_text = "Main Menu"
+        button.tooltip_text = _("Main Menu")
         button.primary = true
       end
     end
@@ -142,13 +146,13 @@ module Impression
       @write_group ||= Adwaita::PreferencesGroup.new.tap do |group|
         group.valign = :end
         group.halign = :center
-        group.description = "All data on the selected drive will be erased"
+        group.description = _("All data on the selected drive will be erased")
       end
     end
 
     def flash_button
       @flash_button ||= Gtk::Button.new.tap do |button|
-        button.label = "Write"
+        button.label = _("Write")
         button.sensitive = false
         button.halign = :center
         button.add_css_class("destructive-action")

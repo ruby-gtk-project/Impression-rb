@@ -170,3 +170,30 @@ rescue LoadError
     warn("NOTE: stone_checksums isn't installed, or is disabled for #{RUBY_VERSION} in the current environment")
   end
 end
+
+### TRANSLATIONS
+# Compiles po/*.po into the .mo catalogues Impression::I18n reads out of the
+# repository. The packaged app gets the same files from the flake's install
+# phase; this is the dev-shell equivalent. Needs msgfmt, which the dev shell
+# carries.
+desc("Compile po/*.po into tmp/locale for a run out of the repository")
+task("locale") do
+  require "fileutils"
+
+  Dir[File.join(__dir__, "po", "*.po")].sort.each do |po|
+    language = File.basename(po, ".po")
+    target = File.join(
+      __dir__,
+      "tmp/locale",
+      language,
+      "LC_MESSAGES",
+    )
+    FileUtils.mkdir_p(target)
+    sh(
+      "msgfmt",
+      "-o",
+      File.join(target, "impression.mo"),
+      po,
+    )
+  end
+end

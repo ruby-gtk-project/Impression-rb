@@ -151,7 +151,11 @@ module Impression
       when false
         nil
       else
-        Xml.parse(File.read(file))&.descendant("os")
+        # osinfo-db is UTF-8 whatever locale the process happens to be in, and
+        # File.read would otherwise tag it with the locale's own encoding — in
+        # the C locale, US-ASCII, which every accented distro name then trips
+        # the scanner over.
+        Xml.parse(File.read(file, encoding: Encoding::UTF_8))&.descendant("os")
       end
     rescue SystemCallError => e
       warn "Failed to read #{file}: #{e.message}"
@@ -283,10 +287,13 @@ module Impression
       false
     end
 
+    # The body is accumulated as bytes and read back as UTF-8, for the same
+    # reason: Net::HTTP hands over binary chunks, and appending them to a
+    # text-encoded buffer depends on the locale.
     def self.get(url)
-      (+"").tap do |body|
+      String.new(encoding: Encoding::BINARY).tap do |body|
         request(url) { |response| body << response.read_body }
-      end
+      end.force_encoding(Encoding::UTF_8)
     end
 
     def self.request(url, redirects = MAX_REDIRECTS, &block)

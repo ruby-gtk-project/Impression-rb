@@ -2,6 +2,8 @@
 
 require "adwaita"
 
+require_relative "i18n"
+
 module Impression
   # ShortcutsDialog lists the keyboard shortcuts.
   #
@@ -12,6 +14,8 @@ module Impression
   # accelerators this port binds, which is the form the Ruby bindings'
   # constructor takes.
   class ShortcutsDialog < Adwaita::ShortcutsDialog
+    include Gettext
+
     SECTIONS = {
       "General" => [
         ["Open File", "<Control>o"],
@@ -22,7 +26,7 @@ module Impression
 
     def initialize
       super()
-      self.title = "Keyboard Shortcuts"
+      self.title = _("Keyboard Shortcuts")
     end
 
     def build
@@ -37,13 +41,13 @@ module Impression
 
       def section(title, items)
         Adwaita::ShortcutsSection.new.tap do |section|
-          section.title = title
+          section.title = _(title)
           items.each { |label, accelerator| section.add(item(label, accelerator)) }
         end
       end
 
       # Positional, not keyword, arguments — even though the error a no-argument
       # new raises advertises the signature as "title:, accelerator:".
-      def item(label, accelerator) = Adwaita::ShortcutsItem.new(label, accelerator)
+      def item(label, accelerator) = Adwaita::ShortcutsItem.new(_(label), accelerator)
   end
 end

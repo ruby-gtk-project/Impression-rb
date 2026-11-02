@@ -1,0 +1,372 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the impression package.
+# Philipp Kiemle <philipp.kiemle@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: impression\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-04-08 17:38-0400\n"
+"PO-Revision-Date: 2024-04-12 20:49+0200\n"
+"Last-Translator: FineFindus <FineFindus@proton.me>\n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:3
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:5
+#: data/resources/blueprints/window.blp:9
+#: data/resources/blueprints/window.blp:21
+#: data/resources/blueprints/window.blp:146 src/main.rs:57 src/window.rs:424
+msgid "Impression"
+msgstr "Impression"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:4
+msgid "Media Writer"
+msgstr "Medienschreiber"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:5
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:11
+msgid "Create bootable drives"
+msgstr "Erstelle bootfähige Laufwerke"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:11
+msgid "usb;flash;writer;bootable;drive;iso;img;disk;image"
+msgstr "usb;flash;schreiber;bootfähig;laufwerk;iso;img;disk;Datenträger"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:6
+msgid "Window width"
+msgstr "Fensterberite"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:10
+msgid "Window height"
+msgstr "Fensterhöhe"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:14
+msgid "Window maximized state"
+msgstr "Maximierter Zustand der Fenster"
+
+#. developer_name tag deprecated with Appstream 1.0
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:7
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:9
+msgid "Khaleel Al-Adhami"
+msgstr "Khaleel Al-Adhami"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:17
+msgid ""
+"Write disk images to your drives with ease. Select an image, insert your "
+"drive, and you're good to go! Impression is a useful tool for both avid "
+"distro-hoppers and casual computer users."
+msgstr ""
+"Schreibe ganz einfach Datenträgerabbilder auf deine Laufwerke. Wähle ein "
+"Datenträgerabbild aus, lege dein Laufwerk ein, und schon kann es losgehen! "
+"Impression ist ein nützliches Tool sowohl für begeisterte Distro-Hopper als "
+"auch für gelegentliche Computerbenutzer."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:38
+msgid "Screen with a choice of a local image or internet download"
+msgstr ""
+"Fenster mit der Möglichkeit ein lokales Datenträgerabbild oder einen "
+"Internet-Download zu wählen"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:42
+msgid "Screen with a chosen ISO and available USB memories"
+msgstr "Fenster mit ausgewähltem ISO und verfügbaren USB-Speichern"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:46
+msgid "Writing the ISO in progress"
+msgstr "Schreiben der ISO in Arbeit"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:50
+msgid "Success screen with a big check mark"
+msgstr "Erfolgsbildschirm mit einem großen Häkchen"
+
+#: data/resources/blueprints/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Allgemein"
+
+#: data/resources/blueprints/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Open File"
+msgstr "Datei Öffnen"
+
+#: data/resources/blueprints/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Neues Fenster"
+
+#: data/resources/blueprints/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Zeige Tastenkürzel"
+
+#: data/resources/blueprints/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Schließen"
+
+#: data/resources/blueprints/window.blp:25
+msgid "Drop Here to Open"
+msgstr "Hierhin ziehen zum Öffnen"
+
+#: data/resources/blueprints/window.blp:35
+#: data/resources/blueprints/window.blp:156
+#: data/resources/blueprints/window.blp:254
+msgid "Main Menu"
+msgstr "Hauptmenü"
+
+#: data/resources/blueprints/window.blp:54
+msgid "Choose Image"
+msgstr "Datenträgerabbild auswählen"
+
+#: data/resources/blueprints/window.blp:64
+msgid "Open File…"
+msgstr "Datei Öffnen…"
+
+#: data/resources/blueprints/window.blp:74
+msgid "Direct Download"
+msgstr "Direkter Download"
+
+#: data/resources/blueprints/window.blp:108
+msgid "No Connection"
+msgstr "Keine Verbindung"
+
+#: data/resources/blueprints/window.blp:109
+msgid "Connect to the internet to view available images"
+msgstr ""
+"Stelle eine Verbindung mit dem Internet her, um verfügbare "
+"Datenträgerabbilder anzuzeigen"
+
+#: data/resources/blueprints/window.blp:218
+msgid "All data on the selected drive will be erased"
+msgstr "Alle Daten auf dem ausgewählten Laufwerk werden gelöscht werden"
+
+#: data/resources/blueprints/window.blp:221
+msgid "Write"
+msgstr "Schreiben"
+
+#: data/resources/blueprints/window.blp:283
+msgid "No Drives"
+msgstr "Keine Laufwerke"
+
+#: data/resources/blueprints/window.blp:284
+msgid "Insert a drive to write to"
+msgstr "Lege ein Laufwerk zum Beschreiben ein"
+
+#: data/resources/blueprints/window.blp:295
+msgid "Writing Completed"
+msgstr "Schreiben Abgeschlossen"
+
+#: data/resources/blueprints/window.blp:296
+msgid "The drive can be safely removed"
+msgstr "Das Laufwerk kann sicher entfernt werden"
+
+#: data/resources/blueprints/window.blp:305
+msgid "Finish"
+msgstr "Fertigstellen"
+
+#: data/resources/blueprints/window.blp:326
+msgid "Writing Unsuccessful"
+msgstr "Schreiben erfolglos"
+
+#: data/resources/blueprints/window.blp:335
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+#: data/resources/blueprints/window.blp:355 src/window.rs:331 src/window.rs:365
+msgid "Writing"
+msgstr "Schreiben"
+
+#: data/resources/blueprints/window.blp:357 src/window.rs:330
+msgid "Do not remove the drive"
+msgstr "Das Laufwerk nicht entfernen"
+
+#: data/resources/blueprints/window.blp:372 src/window.rs:250 src/window.rs:286
+msgid "_Cancel"
+msgstr "_Abbrechen"
+
+#: data/resources/blueprints/window.blp:400
+msgid "Keyboard Shortcuts"
+msgstr "Tastenkombinationen"
+
+#: data/resources/blueprints/window.blp:405
+msgid "About Impression"
+msgstr "Info zu Impression"
+
+#: src/window.rs:246
+msgid "Stop Writing?"
+msgstr "Aufhören zu Schreiben?"
+
+#: src/window.rs:247
+msgid "This might leave the drive in a faulty state"
+msgstr ""
+"Dies kann dazu führen, dass sich das Laufwerk in einem fehlerhaften Zustand "
+"befindet"
+
+#: src/window.rs:250
+msgid "_Stop"
+msgstr "_Stopp"
+
+#: src/window.rs:279
+msgid "Erase Drive?"
+msgstr "Laufwerk löschen?"
+
+#: src/window.rs:287
+msgid "_Erase"
+msgstr "_Löschen"
+
+#: src/window.rs:324 src/window.rs:353
+msgid "Writing will begin once the download is completed"
+msgstr "Das Schreiben beginnt, sobald der Download abgeschlossen ist"
+
+#: src/window.rs:326 src/window.rs:362
+msgid "Downloading Image"
+msgstr "Datenträger wird heruntergeladen"
+
+#: src/window.rs:356
+msgid "This could take a while"
+msgstr "Dies könnte eine Weile dauern"
+
+#: src/window.rs:391
+msgid "Failed to write image"
+msgstr "Schreiben des Datenträgerabbilds fehlgeschlagen"
+
+#: src/window.rs:399
+msgid "Image Written"
+msgstr "Datenträgerabbild geschreiben"
+
+#: src/window.rs:603
+msgid "Disk Images"
+msgstr "Datenträgerabbilder"
+
+#: src/window.rs:629
+msgid "File is not a Disk Image"
+msgstr "Datei ist kein Datenträgerabbild"
+
+#: src/window.rs:734
+msgid "translator-credits"
+msgstr "FineFindus https://github.com/FineFindus"
+
+#: src/window.rs:736
+msgid "Code borrowed from"
+msgstr "Code angelehnt an"
+
+#: src/flash.rs:95
+msgid "Failed to open disk"
+msgstr "Öffnen des Laufwerkes fehlgeschlagen"
+
+#: src/flash.rs:145
+msgid "Failed to extract drive"
+msgstr "Laufwerk kann nicht extrahiert werden"
+
+#: src/flash.rs:203
+msgid "Failed to download image"
+msgstr "Herunterladen des Datenträgerabbilds fehlgeschlagen"
+
+#: src/flash.rs:256
+msgid "Writing to disk failed"
+msgstr "Schreiben des Laufwerks fehlgeschlagen"
+
+#~ msgid "This is a minor release of Impression with a few small improvements."
+#~ msgstr ""
+#~ "Dies ist eine kleinere Version von Impression mit ein paar kleinen "
+#~ "Verbesserungen."
+
+#~ msgid "Support for .xz files"
+#~ msgstr "Unterstützung von .xz Dateien"
+
+#~ msgid ""
+#~ "Impression is made possible by volunteer developers, designers, and "
+#~ "translators. Thank you for your contributions!"
+#~ msgstr ""
+#~ "Impression wird durch freiwillige Entwickler, Designer und Übersetzer "
+#~ "ermöglicht. Vielen Dank für Ihre Beiträge!"
+
+#~ msgid "usb"
+#~ msgstr "USB"
+
+#~ msgid "writer"
+#~ msgstr "Schreiber"
+
+#~ msgid "flash"
+#~ msgstr "brennen"
+
+#~ msgid "bootable"
+#~ msgstr "bootfähig"
+
+#~ msgid "drive"
+#~ msgstr "Laufwerk"
+
+#~ msgid "iso"
+#~ msgstr "iso"
+
+#~ msgid "img"
+#~ msgstr "img"
+
+#~ msgid "disk"
+#~ msgstr "Festplatte"
+
+#~ msgid "image"
+#~ msgstr "Datenträgerabbild"
+
+#~ msgid "Validating…"
+#~ msgstr "Überprüfen …"
+
+#~ msgid "Flash"
+#~ msgstr "Brennen"
+
+#~ msgid "Flashing…"
+#~ msgstr "Brennen…"
+
+#~ msgid "New Window"
+#~ msgstr "Neues Fenster"
+
+#~ msgid "Image flashed"
+#~ msgstr "Datenträgerabbild gebrannt"
+
+#~ msgid "flash;usb;drive;bootable"
+#~ msgstr "flash;usb;laufwerk;bootfähig"
+
+#~ msgid "Refresh Devices"
+#~ msgstr "Geräte aktualisieren"
+
+#~ msgid "Image Flashed"
+#~ msgstr "Datenträgerabbild gebrannt"
+
+#~ msgid "Flash disk images (ISOs/IMGs) to create bootable devices"
+#~ msgstr ""
+#~ "Brenne Datenträgerabbilder (ISOs/IMGs) zur Erstellung bootfähiger Geräte"
+
+#~ msgid "Flash Images"
+#~ msgstr "Datenträgerabbild Brennen"
+
+#~ msgid "Open a disk image to flash to a USB drive"
+#~ msgstr ""
+#~ "Öffne ein Datenträgerabbild, um es auf ein USB-Laufwerk zu übertragen"
+
+#~ msgid "Warning: This will erase all data on the selected drive"
+#~ msgstr ""
+#~ "Achtung: Dies wird alle Daten auf dem ausgewählten Laufwerk überschreiben"
+
+#~ msgid "Updating device list…"
+#~ msgstr "Gerätliste wird aktualisiert…"
+
+#~ msgid "Have a nice day!"
+#~ msgstr "Einen schönen Tag noch!"
+
+#~ msgid "Done"
+#~ msgstr "Fertig"
+
+#~ msgid "Flash Again"
+#~ msgstr "Erneut Brennen"
+
+#~ msgid "Open File"
+#~ msgstr "Datei Öffnen"
+
+#~ msgid "Primary Menu"
+#~ msgstr "Primäres Menü"

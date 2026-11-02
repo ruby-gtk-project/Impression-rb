@@ -3,6 +3,7 @@
 require "adwaita"
 
 require_relative "distro_row"
+require_relative "i18n"
 require_relative "drag_overlay"
 
 module Impression
@@ -13,6 +14,8 @@ module Impression
   # Adw.NavigationPage tagged welcome), with the architecture drop-down
   # handler from src/window.rs (on_architecture_changed).
   class WelcomePage
+    include Gettext
+
     APP_ICON = "io.gitlab.adhami3310.Impression"
     ARCHITECTURES = %w[x86_64 aarch64].freeze
 
@@ -112,13 +115,13 @@ module Impression
     def focus_open_button = open_image_button.grab_focus
 
     def page
-      @page ||= Adwaita::NavigationPage.new(drag_overlay.bin, "Impression").tap do |navigation_page|
+      @page ||= Adwaita::NavigationPage.new(drag_overlay.bin, _("Impression")).tap do |navigation_page|
         navigation_page.tag = "welcome"
       end
     end
 
     def drag_overlay
-      @drag_overlay ||= DragOverlay.new(title: "Drop Here to Open", child: toolbar_view)
+      @drag_overlay ||= DragOverlay.new(title: _("Drop Here to Open"), child: toolbar_view)
     end
 
     def toolbar_view = @toolbar_view ||= Adwaita::ToolbarView.new
@@ -129,7 +132,7 @@ module Impression
       @menu_button ||= Gtk::MenuButton.new.tap do |button|
         button.icon_name = "open-menu-symbolic"
         button.menu_model = @menu_model
-        button.tooltip_text = "Main Menu"
+        button.tooltip_text = _("Main Menu")
         button.primary = true
       end
     end
@@ -157,7 +160,7 @@ module Impression
     end
 
     def title_label
-      @title_label ||= Gtk::Label.new("Choose Image").tap do |label|
+      @title_label ||= Gtk::Label.new(_("Choose Image")).tap do |label|
         label.add_css_class("title")
         label.add_css_class("title-1")
       end
@@ -167,7 +170,7 @@ module Impression
 
     def open_image_button
       @open_image_button ||= Adwaita::ActionRow.new.tap do |row|
-        row.title = "Open File…"
+        row.title = _("Open File…")
       end
     end
 
@@ -179,7 +182,7 @@ module Impression
 
     def download_group
       @download_group ||= Adwaita::PreferencesGroup.new.tap do |group|
-        group.title = "Direct Download"
+        group.title = _("Direct Download")
       end
     end
 
@@ -219,8 +222,8 @@ module Impression
 
     def offline_status
       @offline_status ||= Adwaita::StatusPage.new.tap do |page|
-        page.title = "No Connection"
-        page.description = "Connect to the internet to view available images"
+        page.title = _("No Connection")
+        page.description = _("Connect to the internet to view available images")
         page.add_css_class("dim-label")
       end
     end

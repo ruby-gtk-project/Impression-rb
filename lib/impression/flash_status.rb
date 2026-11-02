@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "i18n"
+
 module Impression
   # Progress is either a known fraction of the work or a pulse, for the phases
   # whose total size is not knowable in advance.
@@ -35,35 +37,40 @@ module Impression
   # per-phase page copy from src/window.rs (update_flashing_page) keyed by the
   # same phase names.
   class FlashStatus
+    # N_ marks these for extraction without looking them up: the table is built
+    # at load time, before a locale is set, and StatusView translates each
+    # string where it shows it.
+    extend Gettext
+
     PHASES = {
       download:      {
-        title:       "Downloading Image",
-        description: "Writing will begin once the download is completed",
+        title:       N_("Downloading Image"),
+        description: N_("Writing will begin once the download is completed"),
         icon_name:   "folder-download-symbolic",
       },
       extract:       {
-        title:       "Extracting Image",
-        description: "Reading the source image",
+        title:       N_("Extracting Image"),
+        description: N_("Reading the source image"),
         icon_name:   "media-optical-cd-symbolic",
       },
       process_image: {
-        title:       "Processing Image",
-        description: "Splitting the install image",
+        title:       N_("Processing Image"),
+        description: N_("Splitting the install image"),
         icon_name:   "media-optical-cd-symbolic",
       },
       partition:     {
-        title:       "Partitioning Drive",
-        description: "Do not remove the drive",
+        title:       N_("Partitioning Drive"),
+        description: N_("Do not remove the drive"),
         icon_name:   "usb-stick-symbolic",
       },
       build_image:   {
-        title:       "Preparing Installer Image",
-        description: "Building the installer filesystem",
+        title:       N_("Preparing Installer Image"),
+        description: N_("Building the installer filesystem"),
         icon_name:   "flash-symbolic",
       },
       copy:          {
-        title:       "Writing",
-        description: "This could take a while",
+        title:       N_("Writing"),
+        description: N_("This could take a while"),
         icon_name:   "flash-symbolic",
       },
     }.freeze

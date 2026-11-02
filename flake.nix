@@ -95,6 +95,22 @@
           pkgs.mtools
         ];
 
+        # gettext reads a translation only when the process is in a real
+        # locale — in the C locale it hands back the untranslated string
+        # however good the catalogue — so test/drive_i18n.rb needs one locale
+        # that exists. This builds the two it uses. It is deliberately neither
+        # exported as LOCALE_ARCHIVE nor added to the shell's packages — its
+        # setup hook would export it — because that overrides the host's own
+        # archive for every command in the shell and a developer's own LANG
+        # stops resolving. The drive picks it up by its own name instead.
+        locales = pkgs.glibcLocales.override {
+          allLocales = false;
+          locales = [
+            "de_DE.UTF-8/UTF-8"
+            "en_US.UTF-8/UTF-8"
+          ];
+        };
+
         # ruby-gnome gems build C extensions with extconf.rb + the pkg-config
         # gem; nixpkgs only ships gemConfig entries for the GTK3-era subset, so
         # the GTK4 gems get their build inputs declared here.
@@ -168,6 +184,17 @@
             # resolves against the copied tree.
             install -Dm755 exe/${launcher} $out/share/Impression/exe/${launcher}
 
+            # Compile the translation catalogues the app looks up through
+            # XDG_DATA_DIRS, which the wrapper below points at $out/share.
+            if [ -d po ]; then
+              for po in po/*.po; do
+                language="$(basename "$po" .po)"
+                install -d "$out/share/locale/$language/LC_MESSAGES"
+                ${pkgs.gettext}/bin/msgfmt \
+                  -o "$out/share/locale/$language/LC_MESSAGES/impression.mo" "$po"
+              done
+            fi
+
             # Compile any GSettings schema the port ships.
             if [ -d data/schemas ]; then
               mkdir -p $out/share/glib-2.0/schemas
@@ -238,12 +265,14 @@
             export XDG_DATA_DIRS="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk4}/share/gsettings-schemas/${pkgs.gtk4.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS"
             export GI_TYPELIB_PATH="${typelibPath}''${GI_TYPELIB_PATH:+:$GI_TYPELIB_PATH}"
             export RUBYLIB="$PWD/lib''${RUBYLIB:+:$RUBYLIB}"
+            export IMPRESSION_TEST_LOCALE_ARCHIVE="${locales}/lib/locale/locale-archive"
             export LD_LIBRARY_PATH="${libraryPath}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
             [ -d data/schemas ] && export GSETTINGS_SCHEMA_DIR="$PWD/data/schemas"
             unset BUNDLE_GEMFILE BUNDLE_FROZEN
             echo "Impression devshell — ruby $(ruby -e 'print RUBY_VERSION')"
             echo "run the app:   xvfb-run ruby exe/impression"
             echo "drive the app: xvfb-run ruby test/drive_*.rb"
+            echo "translations:  rake locale, then LANGUAGE=de xvfb-run ruby exe/impression"
             echo "run the specs: ruby -e 'require \"rspec/core\"; exit RSpec::Core::Runner.run([\"--format\", \"progress\", \"--require\", \"spec_helper\", \"spec\"])'"
           '';
         };

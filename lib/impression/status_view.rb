@@ -2,6 +2,8 @@
 
 require "adwaita"
 
+require_relative "i18n"
+
 module Impression
   # StatusView is the stack the window shows instead of the chooser: the
   # waiting spinner, the no-drives page, the progress page, and the success and
@@ -11,6 +13,8 @@ module Impression
   # named stack, with its loading / no_devices / success / failure / flashing
   # pages) together with the handlers src/window.rs attaches to their buttons.
   class StatusView
+    include Gettext
+
     APP_ICON = "io.gitlab.adhami3310.Impression"
 
     LOADING = "loading"
@@ -84,9 +88,11 @@ module Impression
     def owned_by_run? = OWNED_BY_RUN.include?(visible)
 
     # Upstream's update_flashing_page: the copy for the phase the write is in.
+    # FlashStatus holds the untranslated strings, because it is built before a
+    # locale is known; they are looked up here, where they are shown.
     def phase=(page)
-      flashing_page.title = page[:title]
-      flashing_page.description = page[:description]
+      flashing_page.title = _(page[:title])
+      flashing_page.description = _(page[:description])
       flashing_page.icon_name = page[:icon_name]
     end
 
@@ -132,16 +138,16 @@ module Impression
     def no_devices_page
       @no_devices_page ||= Adwaita::StatusPage.new.tap do |page|
         page.icon_name = APP_ICON
-        page.title = "No Drives"
-        page.description = "Insert a drive to write to"
+        page.title = _("No Drives")
+        page.description = _("Insert a drive to write to")
       end
     end
 
     def success_page
       @success_page ||= Adwaita::StatusPage.new.tap do |page|
         page.icon_name = "check-round-outline-symbolic"
-        page.title = "Writing Completed"
-        page.description = "The drive can be safely removed"
+        page.title = _("Writing Completed")
+        page.description = _("The drive can be safely removed")
       end
     end
 
@@ -151,7 +157,7 @@ module Impression
 
     def done_button
       @done_button ||= Gtk::Button.new.tap do |button|
-        button.label = "Finish"
+        button.label = _("Finish")
         button.use_underline = true
         button.valign = :center
         button.halign = :center
@@ -163,7 +169,7 @@ module Impression
     def failure_page
       @failure_page ||= Adwaita::StatusPage.new.tap do |page|
         page.icon_name = "error-symbolic"
-        page.title = "Writing Unsuccessful"
+        page.title = _("Writing Unsuccessful")
       end
     end
 
@@ -199,7 +205,7 @@ module Impression
 
     def try_again_button
       @try_again_button ||= Gtk::Button.new.tap do |button|
-        button.label = "Retry"
+        button.label = _("Retry")
         button.use_underline = true
         button.valign = :center
         button.halign = :center
@@ -211,8 +217,8 @@ module Impression
     def flashing_page
       @flashing_page ||= Adwaita::StatusPage.new.tap do |page|
         page.icon_name = "flash-symbolic"
-        page.title = "Writing"
-        page.description = "Do not remove the drive"
+        page.title = _("Writing")
+        page.description = _("Do not remove the drive")
       end
     end
 
@@ -230,7 +236,7 @@ module Impression
 
     def cancel_button
       @cancel_button ||= Gtk::Button.new.tap do |button|
-        button.label = "_Cancel"
+        button.label = _("_Cancel")
         button.use_underline = true
         button.valign = :center
         button.halign = :center

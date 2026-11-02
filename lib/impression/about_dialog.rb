@@ -2,6 +2,7 @@
 
 require "adwaita"
 
+require_relative "i18n"
 require_relative "rb/version"
 
 module Impression
@@ -11,6 +12,8 @@ module Impression
   # from_appdata, reading the metainfo XML out of the GResource bundle; this
   # port has no bundle, so the same fields are set directly.
   class AboutDialog < Adwaita::AboutDialog
+    include Gettext
+
     APP_ID = "io.gitlab.adhami3310.Impression"
     WEBSITE = "https://gitlab.com/adhami3310/Impression"
 
@@ -27,25 +30,26 @@ module Impression
 
     def build
       tap do |dialog|
-        dialog.add_acknowledgement_section("Code borrowed from", ACKNOWLEDGEMENTS)
-        OTHER_APPS.each { |id, name, summary| dialog.add_other_app(id, name, summary) }
+        dialog.add_acknowledgement_section(_("Code borrowed from"), ACKNOWLEDGEMENTS)
+        OTHER_APPS.each { |id, name, summary| dialog.add_other_app(id, _(name), _(summary)) }
       end
     end
 
     def initialize
       super()
-      self.application_name = "Impression"
+      self.application_name = _("Impression")
       self.application_icon = APP_ID
       self.developer_name = "Khaleel Al-Adhami"
       self.version = Rb::VERSION
-      self.comments = "Create bootable drives"
+      self.comments = _("Create bootable drives")
       self.website = WEBSITE
       self.issue_url = "#{WEBSITE}/-/issues"
       self.license_type = Gtk::License::GPL_3_0
       self.developers = DEVELOPERS
       self.designers = DESIGNERS
       self.artists = ARTISTS
-      self.translator_credits = "translator-credits"
+      # The catalogue's own credit line, which each translator fills in.
+      self.translator_credits = _("translator-credits")
     end
   end
 end

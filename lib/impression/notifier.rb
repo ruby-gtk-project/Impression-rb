@@ -2,6 +2,8 @@
 
 require "gtk4"
 
+require_relative "i18n"
+
 module Impression
   # Notifier posts the end-of-write notification.
   #
@@ -12,6 +14,8 @@ module Impression
   # route for a sandboxed app and talks to the session's notification service
   # otherwise.
   class Notifier
+    include Gettext
+
     TITLE = "Impression"
     ID = "impression-write"
 
@@ -32,7 +36,7 @@ module Impression
     private
 
       def notification(message)
-        Gio::Notification.new(TITLE).tap do |gio_notification|
+        Gio::Notification.new(_(TITLE)).tap do |gio_notification|
           gio_notification.body = message
           gio_notification.priority = :normal
         end

@@ -2,12 +2,16 @@
 
 require "gtk4"
 
+require_relative "i18n"
+
 module Impression
   # SaveDialog picks where an online image is downloaded to.
   #
   # Ported from upstream's src/window.rs (save_dialog): the release's own file
   # name is offered, and the chosen path becomes the image's download path.
   class SaveDialog
+    include Gettext
+
     PATTERNS = ["*.img", "*.iso"].freeze
 
     FILTER_NAME = "Disk Images"
@@ -56,7 +60,7 @@ module Impression
 
       def filter
         @filter ||= Gtk::FileFilter.new.tap do |file_filter|
-          file_filter.name = FILTER_NAME
+          file_filter.name = _(FILTER_NAME)
           PATTERNS.each { |pattern| file_filter.add_pattern(pattern) }
         end
       end

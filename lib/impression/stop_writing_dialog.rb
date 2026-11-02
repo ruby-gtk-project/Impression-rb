@@ -2,6 +2,8 @@
 
 require "adwaita"
 
+require_relative "i18n"
+
 module Impression
   # StopWritingDialog asks whether to abandon a write in progress.
   #
@@ -9,6 +11,8 @@ module Impression
   # the window's close request both raise it, and only the destructive Stop
   # Writing response clears the running flag.
   class StopWritingDialog
+    include Gettext
+
     HEADING = "Stop Writing?"
     BODY = "This might leave the drive in a faulty state"
 
@@ -28,9 +32,9 @@ module Impression
     end
 
     def dialog
-      @dialog ||= Adwaita::AlertDialog.new(HEADING, BODY).tap do |alert|
-        alert.add_response("cancel", "_Cancel")
-        alert.add_response("stop", "_Stop Writing")
+      @dialog ||= Adwaita::AlertDialog.new(_(HEADING), _(BODY)).tap do |alert|
+        alert.add_response("cancel", _("_Cancel"))
+        alert.add_response("stop", _("_Stop Writing"))
         alert.set_response_appearance("stop", :destructive)
         alert.default_response = "cancel"
         alert.close_response = "cancel"

@@ -2,6 +2,8 @@
 
 require "gtk4"
 
+require_relative "i18n"
+
 module Impression
   # PrimaryMenu is the hamburger menu both header bars show.
   #
@@ -21,7 +23,7 @@ module Impression
 
     def self.section
       Gio::Menu.new.tap do |section|
-        ITEMS.each { |label, action| section.append(label, action) }
+        ITEMS.each { |label, action| section.append(I18n.translate(label), action) }
       end
     end
   end

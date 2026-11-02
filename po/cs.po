@@ -1,0 +1,422 @@
+# Czech translation for Impression.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the impression package.
+# FIRST AUTHOR Amerey.eu <info@amerey.eu>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: impression\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-20 21:04-0400\n"
+"PO-Revision-Date: 2024-07-03 13:48+0200\n"
+"Last-Translator: Amerey <info@amerey.eu>\n"
+"Language-Team: \n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.4\n"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:3
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:5
+#: data/resources/blueprints/window.blp:9
+#: data/resources/blueprints/window.blp:21
+#: data/resources/blueprints/window.blp:146 src/main.rs:57 src/window.rs:424
+msgid "Impression"
+msgstr "Impression"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:4
+msgid "Media Writer"
+msgstr "Program pro zápis médií"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:5
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:11
+msgid "Create bootable drives"
+msgstr "Vytvořte bootovatelné disky"
+
+#: data/io.gitlab.adhami3310.Impression.desktop.in.in:11
+msgid "usb;flash;writer;bootable;drive;iso;img;disk;image"
+msgstr "usb;flash;bootable;drive;iso;disk;image;jednotka;obraz;bootování"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:6
+msgid "Window width"
+msgstr "Šířka okna"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:10
+msgid "Window height"
+msgstr "Výška okna"
+
+#: data/io.gitlab.adhami3310.Impression.gschema.xml.in:14
+msgid "Window maximized state"
+msgstr "Maximalizovaný stav okna"
+
+#. developer_name tag deprecated with Appstream 1.0
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:7
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:9
+msgid "Khaleel Al-Adhami"
+msgstr "Khaleel Al-Adhami"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:17
+msgid ""
+"Write disk images to your drives with ease. Select an image, insert your "
+"drive, and you're good to go! Impression is a useful tool for both avid "
+"distro-hoppers and casual computer users."
+msgstr ""
+"Přeneste snadno obrazy disků na vaše disky. Vyberte obraz disku, vložte USB "
+"disk a můžete začít! Impression je užitečný nástroj jak pro zapálené distro-"
+"hoppery, tak pro běžné uživatelé počítačů."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:38
+msgid "Screen with a choice of a local image or internet download"
+msgstr "Obrazovka s výběrem místního obrazu disku nebo stažení z internetu"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:42
+msgid "Screen with a chosen ISO and available USB memories"
+msgstr "Obrazovka s vybraným ISO a dostupnými USB disky"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:46
+msgid "Writing the ISO in progress"
+msgstr "Probíhá nahrávání ISO"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:50
+msgid "Success screen with a big check mark"
+msgstr "Obrazovka úspěchu s velkým zaškrtnutím"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:70
+msgid "This is a minor release of Impression with a few small improvements."
+msgstr "Tato verze Impression přináší spoustu drobných vylepšení."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:72
+msgid "Support for .xz files"
+msgstr "Podpora souborů .xz"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:73
+msgid "Faster downloading of images"
+msgstr "Rychlejší stahování obrazů disků"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:75
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:91
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:102
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:117
+msgid ""
+"Impression is made possible by volunteer developers, designers, and "
+"translators. Thank you for your contributions!"
+msgstr ""
+"Impression je tvořen dobrovolnými vývojáři, designéry a překladateli. "
+"Děkujeme za vaše příspěvky!"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:80
+msgid ""
+"This minor release fixes a bug where some .ISO files wouldn't be detected."
+msgstr "Tato verze opravuje chybu, kdy některé soubory .ISO nebyly detekovány."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:85
+msgid ""
+"This release of Impression brings even more convenience and power to your "
+"fingertips:"
+msgstr ""
+"Tato verze Impression přináší ještě více pohodlí a výkonu na dosah ruky:"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:87
+msgid "Direct download of a selection of images directly from the app"
+msgstr "Přímé stažení výběru obrazů disků přímo z aplikace"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:88
+msgid "Updated and more understandable terminology"
+msgstr "Aktualizovaná a srozumitelnější terminologie"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:89
+msgid "Security fixes"
+msgstr "Bezpečnostní opravy"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:96
+msgid "This minor release of Impression delivers:"
+msgstr "Tato verze Impression přináší:"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:98
+msgid "Support for mobile screen sizes"
+msgstr "Podpora velikostí obrazovky mobilních zařízení"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:99
+msgid "Various bug fixes, improving reliability and stability"
+msgstr "Různé opravy chyb zvyšující spolehlivost a stabilitu"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:100
+msgid ""
+"Brazillian Portugese translations, making Impression available in a total of "
+"9 languages"
+msgstr ""
+"Překlady do brazilské portugalštiny, díky čemuž je Impression k dispozici "
+"celkem v 9 jazycích"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:107
+msgid ""
+"This major release of Impression brings a bunch of exciting improvements:"
+msgstr "Tato verze Impression přináší spoustu zajímavých vylepšení:"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:109
+msgid ""
+"Visual enhancements to make the app more beautiful, focused, and engaging"
+msgstr "Vizuální vylepšení, díky kterým bude aplikace krásnější  a poutavější"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:110
+msgid "Automatic updates of the available drives list"
+msgstr "Automatické aktualizace seznamu dostupných disků"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:111
+msgid "Explicit drive selection before flashing, to avoid accidental data loss"
+msgstr ""
+"Explicitní výběr disku před flashováním, aby nedošlo k náhodné ztrátě dat"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:112
+msgid ""
+"Turkish and Czech translations, making Impression available in a total of 8 "
+"languages"
+msgstr ""
+"Turecký a český překlad, díky čemuž je Impression dostupný celkem v 8 "
+"jazycích"
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:114
+msgid ""
+"The versioning scheme has been simplified to only include major and minor "
+"versions. The previous version of Impression was 1.0.1, this is version 2.0. "
+"Going forward, new features and noticeable changes will be included in new "
+"major releases, while fixes and translations will result in new minor "
+"releases."
+msgstr ""
+"Schéma verzí bylo zjednodušeno tak, aby zahrnovalo pouze hlavní a vedlejší "
+"verze. Předchozí verze Impression byla 1.0.1, toto je verze 2.0. V budoucnu "
+"budou nové funkce a znatelné změny zahrnuty do nových hlavních verzí, "
+"zatímco opravy a překlady povedou k novým podverzím."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:122
+msgid "Added Spanish, French, German, Russian, and Italian translations."
+msgstr "Přidány španělské, francouzské, německé, ruské a italské překlady."
+
+#: data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in:127
+msgid "Initial version."
+msgstr "První verze."
+
+#: data/resources/blueprints/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Obecné"
+
+#: data/resources/blueprints/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Open File"
+msgstr "Otevřít soubor"
+
+#: data/resources/blueprints/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Nové okno"
+
+#: data/resources/blueprints/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Zobrazit zkratky"
+
+#: data/resources/blueprints/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Ukončit"
+
+#: data/resources/blueprints/window.blp:25
+msgid "Drop Here to Open"
+msgstr "Přetažením sem otevřete"
+
+#: data/resources/blueprints/window.blp:35
+#: data/resources/blueprints/window.blp:156
+#: data/resources/blueprints/window.blp:254
+msgid "Main Menu"
+msgstr "Hlavní menu"
+
+#: data/resources/blueprints/window.blp:54
+msgid "Choose Image"
+msgstr "Vyberte obraz disku"
+
+#: data/resources/blueprints/window.blp:64
+msgid "Open File…"
+msgstr "Otevřít soubor…"
+
+#: data/resources/blueprints/window.blp:74
+msgid "Direct Download"
+msgstr "Přímé stahování"
+
+#: data/resources/blueprints/window.blp:108
+msgid "No Connection"
+msgstr "Žádné připojení"
+
+#: data/resources/blueprints/window.blp:109
+msgid "Connect to the internet to view available images"
+msgstr "Chcete-li zobrazit dostupné obrazy disků, připojte se k internetu"
+
+#: data/resources/blueprints/window.blp:218
+msgid "All data on the selected drive will be erased"
+msgstr "Všechna data na vybraném disku budou vymazána"
+
+#: data/resources/blueprints/window.blp:221
+msgid "Write"
+msgstr "Nahrát"
+
+#: data/resources/blueprints/window.blp:283
+msgid "No Drives"
+msgstr "Žádné disky"
+
+#: data/resources/blueprints/window.blp:284
+msgid "Insert a drive to write to"
+msgstr "Vložte disk, na který chcete nahrát obraz disku"
+
+#: data/resources/blueprints/window.blp:295
+msgid "Writing Completed"
+msgstr "Nahrávání ukončeno"
+
+#: data/resources/blueprints/window.blp:296
+msgid "The drive can be safely removed"
+msgstr "Disk lze bezpečně vyjmout"
+
+#: data/resources/blueprints/window.blp:305
+msgid "Finish"
+msgstr "Dokončit"
+
+#: data/resources/blueprints/window.blp:326
+msgid "Writing Unsuccessful"
+msgstr "Nahrávání bylo neúspěšné"
+
+#: data/resources/blueprints/window.blp:335
+msgid "Retry"
+msgstr "Opakovat"
+
+#: data/resources/blueprints/window.blp:355 src/window.rs:331 src/window.rs:365
+msgid "Writing…"
+msgstr "Nahrávání…"
+
+#: data/resources/blueprints/window.blp:357 src/window.rs:330
+msgid "Do not remove the drive"
+msgstr "Nevyjímejte disk"
+
+#: data/resources/blueprints/window.blp:372 src/window.rs:250 src/window.rs:286
+msgid "_Cancel"
+msgstr "_Zrušit"
+
+#: data/resources/blueprints/window.blp:400
+msgid "Keyboard Shortcuts"
+msgstr "Klávesové zkratky"
+
+#: data/resources/blueprints/window.blp:405
+msgid "About Impression"
+msgstr "O aplikaci Impression"
+
+#: src/window.rs:246
+msgid "Stop Writing?"
+msgstr "Zastavit nahrávání?"
+
+#: src/window.rs:247
+msgid "This might leave the drive in a faulty state."
+msgstr "Mohlo by to vést k tomu, že disk bude nečitelný."
+
+#: src/window.rs:250
+msgid "_Stop"
+msgstr "Zas_tavit"
+
+#: src/window.rs:279
+msgid "Erase Drive?"
+msgstr "Vymazat Disk?"
+
+#: src/window.rs:287
+msgid "_Erase"
+msgstr "_Vymazat"
+
+#: src/window.rs:324 src/window.rs:353
+msgid "Writing will begin once the download is completed"
+msgstr "Zápis začne po dokončení stahování"
+
+#: src/window.rs:326 src/window.rs:362
+msgid "Downloading Image…"
+msgstr "Stahování obrazu disku…"
+
+#: src/window.rs:356
+msgid "Copying files…"
+msgstr "Kopírování souborů…"
+
+#: src/window.rs:391
+msgid "Failed to write image"
+msgstr "Nepodařilo se nahrát obraz disku"
+
+#: src/window.rs:399
+msgid "Image Written"
+msgstr "Obraz disku nahrán"
+
+#: src/window.rs:603
+msgid "Disk Images"
+msgstr "Obrazy disků"
+
+#: src/window.rs:629
+msgid "File is not a Disk Image"
+msgstr "Soubor není obraz disku"
+
+#: src/window.rs:734
+msgid "translator-credits"
+msgstr "Amerey.eu"
+
+#: src/window.rs:736
+msgid "Code borrowed from"
+msgstr "Kód vypůjčený od"
+
+#: src/flash.rs:95
+msgid "Failed to open disk"
+msgstr "Nepodařilo se otevřít disk"
+
+#: src/flash.rs:145
+msgid "Failed to extract drive"
+msgstr "Nepodařilo se extrahovat disk"
+
+#: src/flash.rs:203
+msgid "Failed to download image"
+msgstr "Nepodařilo se stáhnout obraz disku"
+
+#: src/flash.rs:256
+msgid "Writing to disk failed"
+msgstr "Nahrávání na disk se nezdařilo"
+
+#~ msgid "usb"
+#~ msgstr "usb"
+
+#~ msgid "flash"
+#~ msgstr "flash"
+
+#~ msgid "bootable"
+#~ msgstr "spustitelný"
+
+#~ msgid "drive"
+#~ msgstr "disk"
+
+#~ msgid "iso"
+#~ msgstr "iso"
+
+#, fuzzy
+#~ msgid "img"
+#~ msgstr "obraz disku"
+
+#~ msgid "disk"
+#~ msgstr "disk"
+
+#~ msgid "image"
+#~ msgstr "obraz disku"
+
+#, fuzzy
+#~ msgid "Validating…"
+#~ msgstr "Nahrávání…"
+
+#~ msgid "Flash"
+#~ msgstr "Nahrát"
+
+#~ msgid "New Window"
+#~ msgstr "Nové okno"
+
+#~ msgid "Image flashed"
+#~ msgstr "Obraz disku nahrán"
+
+#~ msgid "flash;usb;drive;bootable"
+#~ msgstr "flash;usb;drive;bootable;disk;spustitelný"

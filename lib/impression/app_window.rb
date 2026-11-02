@@ -10,6 +10,7 @@ require_relative "disk_image"
 require_relative "erase_dialog"
 require_relative "flash_request"
 require_relative "flash_status"
+require_relative "i18n"
 require_relative "notifier"
 require_relative "online"
 require_relative "open_dialog"
@@ -32,6 +33,8 @@ module Impression
   # monitor, the osinfo-db fetch, and the once-a-second poll of the write
   # thread's status.
   class AppWindow
+    include Gettext
+
     TITLE = "Impression"
 
     CHOOSE = "choose"
@@ -109,7 +112,7 @@ module Impression
     def open_path(path)
       case EXTENSIONS.include?(File.extname(path).delete_prefix("."))
       when false
-        toast_overlay.add_toast(Adwaita::Toast.new("File is not a Disk Image"))
+        toast_overlay.add_toast(Adwaita::Toast.new(_("File is not a Disk Image")))
         warn "Not a Disk Image: #{path}"
       else
         @selected_image = DiskImage.local(path)
@@ -119,7 +122,7 @@ module Impression
 
     def window
       @window ||= Adwaita::ApplicationWindow.new(application).tap do |win|
-        win.title = TITLE
+        win.title = _(TITLE)
         win.width_request = 360
         win.height_request = 294
       end
@@ -166,7 +169,7 @@ module Impression
       @status_menu_button ||= Gtk::MenuButton.new.tap do |button|
         button.icon_name = "open-menu-symbolic"
         button.menu_model = menu_model
-        button.tooltip_text = "Main Menu"
+        button.tooltip_text = _("Main Menu")
         button.primary = true
       end
     end
@@ -424,10 +427,10 @@ module Impression
         when true
           status_view.show(StatusView::FAILURE)
           status_view.error = status.error
-          notifier.notify("Failed to write image")
+          notifier.notify(_("Failed to write image"))
         else
           status_view.show(StatusView::SUCCESS)
-          notifier.notify("Image Written")
+          notifier.notify(_("Image Written"))
         end
 
         @request.cancel

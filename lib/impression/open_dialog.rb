@@ -2,12 +2,16 @@
 
 require "gtk4"
 
+require_relative "i18n"
+
 module Impression
   # OpenDialog picks the disk image to write.
   #
   # Ported from upstream's src/window.rs (open_dialog), including the filter's
   # mime types and patterns.
   class OpenDialog
+    include Gettext
+
     MIME_TYPES = [
       "application/x-iso9660-image",
       "application/x-raw-disk-image",
@@ -62,7 +66,7 @@ module Impression
 
       def filter
         @filter ||= Gtk::FileFilter.new.tap do |file_filter|
-          file_filter.name = FILTER_NAME
+          file_filter.name = _(FILTER_NAME)
           MIME_TYPES.each { |mime_type| file_filter.add_mime_type(mime_type) }
           PATTERNS.each { |pattern| file_filter.add_pattern(pattern) }
         end

@@ -1,0 +1,15 @@
+# The Ruby sources carrying translatable strings, in place of upstream's
+# blueprint and Rust list. `rake pot` extracts from exactly these.
+lib/impression/about_dialog.rb
+lib/impression/app_window.rb
+lib/impression/device_page.rb
+lib/impression/erase_dialog.rb
+lib/impression/flash_status.rb
+lib/impression/notifier.rb
+lib/impression/open_dialog.rb
+lib/impression/primary_menu.rb
+lib/impression/save_dialog.rb
+lib/impression/shortcuts_dialog.rb
+lib/impression/status_view.rb
+lib/impression/stop_writing_dialog.rb
+lib/impression/welcome_page.rb
