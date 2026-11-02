@@ -4,22 +4,31 @@ Upstream: `origin/main` in this repo (Rust / gtk-rs + libadwaita, one blueprint)
 Port: the `ruby` branch. Scanned with
 `.claude/skills/component-identification/scripts/component-scan.sh`.
 
-Totals from the scan: upstream **52 widget rows / 18 CSS classes / 7 signals /
-8 actions / 2 controllers** across 5 source files; the `ruby` branch has
-**4 widget rows, 0 CSS classes, 1 signal, 0 actions** — the scaffold window
-only. Effectively nothing of the app exists yet.
+Scan totals, as of this survey:
 
-The whole UI is one blueprint, `data/resources/blueprints/window.blp`, bound to
-`src/window.rs` (996 lines) by `CompositeTemplate`. Those two files are one
-component *set*; the port splits them by page, because a single
-`lib/app_window.rb` carrying all three stacks would be unreadable.
+| | widget rows | distinct types | CSS classes | signals | actions | controllers |
+|---|---:|---:|---:|---:|---:|---:|
+| upstream (`src/` + `data/`, 5 source files + 1 blueprint) | 52 | 33 | 18 | 7 | 8 | 2 |
+| port (`lib/`, 30 files) | 55 | 30 | 16 (+1 behind a constant) | 15 | 1 (+7 built in a loop) | 1 |
 
-House shape note: the pilot port (`gnome-contacts-rb`) keeps flat
-`lib/<thing>.rb` files with top-level classes and `lib/<app>.rb` as the entry
-point. The `ruby` branch currently has the kettle-jem gem skeleton instead
-(`lib/impression.rb` → `lib/impression/application.rb`, `module Impression`).
-Targets below are written flat (`lib/application.rb`, …) to match the house
-shape; the one existing file is the scaffold that `lib/application.rb` replaces.
+The scan's `action` stream is unreliable on the port by design — `app.quit`
+comes from a literal, the four `win.*` actions come from a `action(name)`
+helper and the accelerators from the frozen `ACCELS` hash, so only one shows.
+Read `lib/impression/application.rb` and `lib/impression/app_window.rb#setup_actions`
+for the real set; both match upstream exactly (see below).
+
+The whole upstream UI is one blueprint, `data/resources/blueprints/window.blp`,
+bound to `src/window.rs` (996 lines) by `CompositeTemplate`. Those two files are
+one component *set*; the port splits them by page, because a single
+`app_window.rb` carrying all three stacks would be unreadable.
+
+House shape note: the port kept the kettle-jem gem skeleton
+(`lib/impression.rb` → `lib/impression/*.rb`, everything inside
+`module Impression`) rather than the pilot's flat `lib/<thing>.rb`. That is the
+decision in force; the targets below name the files that exist.
+
+Every component below exists on `ruby`. What is left is listed under
+**Remaining gaps**.
 
 ---
 
@@ -36,10 +45,11 @@ Accelerators set: `app.quit` `<Control>q`, `win.close` `<Control>w`,
 `main.rs` also does: gettext bind/textdomain, `set_application_name`,
 GResource load, and `get_size_string` (MiB under 1024, else GiB with 2 dp).
 
-→ `lib/application.rb` (actions, accels, open-file handling),
-`lib/impression.rb` (entry: i18n + launcher), `lib/size_format.rb`.
-**Present:** scaffold only, at `lib/impression/application.rb` — a status page
-saying the port is unwritten. No actions, no accels, no open handling.
+→ `lib/impression/application.rb` (actions, `ACCELS`, open-file handling, icon
+search path, stylesheet install), `exe/impression` + `lib/impression.rb`
+(entry), `lib/impression/size_format.rb`. **Present.** The port uses
+`Gtk::Application` (the Adwaita one is unusable in these bindings) and loads
+`data/icons` through `Gtk::IconTheme` instead of a GResource bundle.
 
 ## window.blp (`template $AppWindow`) + src/window.rs — the window shell
 
@@ -58,7 +68,11 @@ raises the "Stop Writing?" dialog and vetoes the close. State held:
 selected device object path, selected disk image (`Local{path,compression}` /
 `Online{url,download_path,name}`), available devices, `is_running`.
 
-→ `lib/app_window.rb`. **Missing.**
+→ `lib/impression/app_window.rb` (492 lines) and
+`lib/impression/disk_image.rb` (the `Compression`/`DiskImage` pair).
+**Present.** `Adwaita::ApplicationWindow` does work here when it is handed the
+`Gtk::Application`. The `devel` CSS class is not reproduced — the port has no
+profile split.
 
 ## window.blp — NavigationView, page `welcome` — the image chooser
 
@@ -89,7 +103,8 @@ while the welcome page is showing and `offline_screen` is visible. An empty
 `downloadable-distros` setting clears both lists and hides spinner *and*
 offline screen.
 
-→ `lib/welcome_page.rb` + `lib/distro_row.rb`. **Missing.**
+→ `lib/impression/welcome_page.rb` (271 lines) + `lib/impression/distro_row.rb`.
+**Present.**
 
 ## window.blp — NavigationView, page `device_list` — pick a drive
 
@@ -106,7 +121,7 @@ offline screen.
 | `Adw.PreferencesGroup` | 1 | — | — | description _("All data on the selected drive will be erased") |
 | `Gtk.Button flash_button` | 1 | `destructive-action`, `pill` | `clicked` → `flash_dialog` | _("Write"); sensitive only while a device is selected |
 
-→ `lib/device_page.rb`. **Missing.**
+→ `lib/impression/device_page.rb`. **Present.**
 
 ## window.blp — `Gtk.Stack stack` under the toast overlay — the status views
 
@@ -141,14 +156,15 @@ _("Preparing Installer Image") / _("Building the installer filesystem") /
 A device change arriving while `flashing` / `failure` / `success` is visible
 must **not** navigate away — upstream guards this explicitly.
 
-→ `lib/status_view.rb`. **Missing.**
+→ `lib/impression/status_view.rb` (247 lines) +
+`lib/impression/flash_status.rb` (the phases and `Progress`). **Present.**
 
 ## window.blp — `menu primary_menu`
 
 Two items in one section: _("Keyboard Shortcuts") → `win.show-help-overlay`,
 _("About Impression") → `win.about`. Used by all three header bars.
 
-→ `lib/primary_menu.rb`. **Missing.**
+→ `lib/impression/primary_menu.rb`. **Present.**
 
 ## window.blp — `Adw.ShortcutsDialog help_overlay`
 
@@ -157,7 +173,7 @@ One `Adw.ShortcutsSection` C_("shortcut window", "General") with three
 `win.show-help-overlay`, Quit → `app.quit`. Presented by
 `win.show-help-overlay`.
 
-→ `lib/shortcuts_dialog.rb`. **Missing.**
+→ `lib/impression/shortcuts_dialog.rb`. **Present.**
 
 ## src/widgets/drag_overlay.rs — drop target overlay
 
@@ -169,7 +185,10 @@ One `Adw.ShortcutsSection` C_("shortcut window", "General") with three
 | `Adw.StatusPage` | 1 | `drag-overlay-status-page` | — | `document-send-symbolic`, title from the `title` property |
 | `Gtk.DropTarget` (controller) | 1 | — | `notify::current-drop` | reveals the overlay while a drop hovers; re-settable, old handler disconnected |
 
-→ `lib/drag_overlay.rb`. **Missing.**
+→ `lib/impression/drag_overlay.rb`. **Present** as a composed object rather
+than a registered GObject subclass, so the `dragoverlay` CSS *name* is not
+reproduced (nothing in upstream's stylesheet targets it). `drop_target=` does
+not disconnect a previous handler, because the window sets it once.
 
 ## src/widgets/device_list.rs — one row per writable drive
 
@@ -189,8 +208,12 @@ label), label composition `"{id_label} ({vendor} {model})"` falling back to
 `"{vendor} {model}"`, and `monitor_devices` — an ObjectManager
 `InterfacesAdded`/`InterfacesRemoved` subscription with a 500 ms debounce.
 
-→ `lib/device_row.rb` (the rows) and `lib/device_monitor.rb` (UDisks + the
-debounce). **Both missing.**
+→ `lib/impression/device_row.rb` (the rows) and
+`lib/impression/device_monitor.rb` (UDisks + the debounce). **Present.** The
+bindings have no UDisks client and `GetManagedObjects`' `a{oa{sa{sv}}}` reply
+has no Ruby conversion, so the port enumerates through
+`org.freedesktop.DBus.Introspectable` and reads properties through
+`org.freedesktop.DBus.Properties` over `Gio::DBus`.
 
 ## src/window.rs — dialogs
 
@@ -202,47 +225,54 @@ debounce). **Both missing.**
 | Save download (`save_dialog`) | `Gtk.FileDialog` + `Gtk.FileFilter` | — | modal; patterns `*.img *.iso`; initial name = last URL segment or `disk-image.img` |
 | About (`show_about`) | `Adw.AboutDialog` | — | built `from_appdata` upstream; developers, designers, artists, translator-credits, acknowledgement _("Code borrowed from") Popsicle, and two other apps (Footage, Switcheroo) |
 
-→ `lib/erase_dialog.rb`, `lib/stop_writing_dialog.rb`, `lib/open_dialog.rb`,
-`lib/save_dialog.rb`, `lib/about_dialog.rb`. **All missing.**
+→ `lib/impression/erase_dialog.rb`, `lib/impression/stop_writing_dialog.rb`,
+`lib/impression/open_dialog.rb`, `lib/impression/save_dialog.rb`,
+`lib/impression/about_dialog.rb`. **All present.** `from_appdata` is not bound,
+so About sets its fields directly.
 
 ## Non-widget components the UI depends on
 
-| Upstream | → port | What it is |
-|---|---|---|
-| `data/io.gitlab.adhami3310.Impression.gschema.xml.in` | `lib/settings.rb` | `window-width` 500, `window-height` 600, `is-maximized` false, `downloadable-distros` `a(smsb)` with 7 defaults (archlinux.org, endlessos.com, fedoraproject.org/Silverblue inverted, manjaro.org, opensuse.org, ubuntu.com, ubuntu.com/LTS) |
-| `data/resources/style.css` | `lib/style.rb` + the stylesheet | 6 rules: `.loading-frame`, `.architecture button:not(:hover)`, `.app_icon`, `.drag-overlay-status-page`, `.error-message` |
-| `data/resources/resources.gresource.xml` + `icons/` | asset load in `lib/application.rb` | 7 bundled action icons (`check-round-outline`, `error`, `flash`, `image-missing`, `paper`, `usb-stick`, `view-refresh`) and 2 other-app icons the About dialog shows |
-| `src/online.rs` | `lib/online.rb` + `lib/distro_release.rb` | `db.libosinfo.org/latest.json` → osinfo-db tarball → roxmltree parse → `DistroRelease{name, version, url, variant}`, filtered by must-contain/invert, prerelease dropped, releases within 2 years (or rolling) |
-| `src/flash/mod.rs` | `lib/flash_request.rb`, `lib/flash_status.rb` | download with 250 ms progress ticks, xz extract, unmount partitions, open the block device, copy with progress, rescan + eject, `FlashPhase`/`Progress::{Fraction,Pulse}`/`FlashStatus::{Active,Done}`, cancellation |
-| `src/flash/windows_installer.rs` | `lib/windows_installer.rb` | the Windows-ISO path: partition, split oversized install.wim, build a FAT32 image |
-| `src/flash/udf.rs` | `lib/udf.rb` | UDF reader used to pull files out of a Windows ISO |
-| `src/flash/wim.rs` | `lib/wim.rb` | WIM image size/split arithmetic |
-| `src/window.rs` `send_notification` | `lib/notifier.rb` | XDG notification portal; _("Image Written") / _("Failed to write image"), only when the window is inactive |
-| `data/…desktop.in.in` | packaging | `Exec=impression %u`, `DBusActivatable`, mime types, keywords |
-| `po/` (24 languages, 78 msgids, `impression.pot`) | `po/` kept as-is | translation parity is its own step |
+| Upstream | → port | Present | What it is |
+|---|---|---|---|
+| `data/io.gitlab.adhami3310.Impression.gschema.xml.in` | `lib/impression/settings.rb` | yes | `window-width` 500, `window-height` 600, `is-maximized` false, `downloadable-distros` `a(smsb)` with 7 defaults (archlinux.org, endlessos.com, fedoraproject.org/Silverblue inverted, manjaro.org, opensuse.org, ubuntu.com, ubuntu.com/LTS) |
+| `data/resources/style.css` | `lib/impression/style.rb` | yes | the same 6 rules, inline, installed at `PRIORITY_APPLICATION` |
+| `data/resources/resources.gresource.xml` + `icons/` | `data/icons/` + the icon search path in `lib/impression/application.rb` | yes | 7 bundled action icons and 4 app icons, as a hicolor tree instead of a GResource bundle |
+| `src/online.rs` | `lib/impression/online.rb`, `lib/impression/distro_release.rb`, `lib/impression/xml.rb` | yes | `db.libosinfo.org/latest.json` → osinfo-db tarball → XML parse → `DistroRelease{name, version, url, variant}`, filtered by must-contain/invert, prerelease dropped, releases within 2 years (or rolling). `xml.rb` is a hand-written reader because REXML is not in the runtime closure |
+| `src/flash/mod.rs` | `lib/impression/flash_request.rb`, `lib/impression/flash_status.rb` | yes | download with progress ticks, xz extract, unmount partitions, open the block device, copy with progress, rescan + eject, phases/`Progress`/cancellation |
+| `src/flash/windows_installer.rs` | `lib/impression/windows_installer.rb` | yes | the Windows-ISO path: partition, split oversized install.wim, build a FAT32 image |
+| `src/flash/udf.rs` | `lib/impression/udf.rb` | yes | UDF reader used to pull files out of a Windows ISO |
+| `src/flash/wim.rs` | `lib/impression/wim.rb` | yes | WIM image size/split arithmetic |
+| `src/window.rs` `send_notification` | `lib/impression/notifier.rb` | yes | XDG notification portal; _("Image Written") / _("Failed to write image"), only when the window is inactive |
+| `po/` (24 languages, `impression.pot`) | `po/` + `lib/impression/i18n.rb` | yes | the same 24 catalogues; `i18n.rb` binds libintl through Fiddle and `rake locale` compiles the `.mo` files |
+| `data/…desktop.in.in`, `…metainfo.xml.in.in`, `…service.in` | — | **no** | desktop entry, AppStream metainfo and the D-Bus service file are not in the port |
 
-## Blockers found while surveying
+## Remaining gaps
 
-1. **No UDisks binding for Ruby, and no `dbus` gem in the dev shell.** The
-   device list, unmount, rescan and eject all go through UDisks2 over D-Bus.
-   Either add `ruby-dbus` to the Gemfile/`gemset.nix` or drive `udisksctl`
-   as a subprocess; the choice shapes `lib/device_monitor.rb`.
-2. **No XML parser in the dev shell** — `rexml` and `nokogiri` both fail to
-   require. `lib/online.rb` needs one (osinfo-db is XML).
-3. **`Adwaita::AboutDialog.from_appdata` is not bound** (checked in the dev
-   shell; `add_other_app` and `add_acknowledgement_section` are). The About
-   dialog has to be populated field by field from the metainfo values.
-4. **No tokio.** Every `runtime().spawn` becomes a Ruby thread plus
-   `GLib::Idle`/`timeout_add`; the 1-second progress poll and the 10-second
-   offline retry map onto `GLib.timeout_add_seconds` directly.
-5. **Windows-installer support is ~1 100 lines of byte-level Rust**
-   (`udf.rs`, `wim.rs`, `windows_installer.rs`) and carries four of the six
-   `FlashPhase` values. It is the single largest unit; the UI is cheap by
-   comparison.
-6. **Gem-skeleton vs house shape.** `lib/impression/application.rb` under
-   `module Impression` is not the flat `lib/<thing>.rb` shape the pilot uses.
-   Decide once, before the first real file lands.
+1. **Packaging data files.** No `.desktop`, no AppStream metainfo, no D-Bus
+   `.service`. Upstream's desktop entry carries `Exec=impression %u`,
+   `DBusActivatable=true`, the disk-image mime types and the keywords; the
+   metainfo is what upstream's About dialog reads through `from_appdata`.
+2. **The `devel` CSS class.** Upstream adds it to the window when
+   `PROFILE == "Devel"` and ships a separate `.Devel` icon (which the port does
+   carry). The port has no profile split, so the striped dev header never
+   appears.
+3. **The `dragoverlay` CSS name.** Upstream sets it in `class_init`; the port
+   composes rather than subclasses, so the name is absent. Nothing in the
+   stylesheet targets it, so this is cosmetic parity only.
+4. **No specs.** `spec/` is empty and the dev shell's spec runner has nothing
+   to run. `test/` holds two drive scripts (`drive_i18n.rb`,
+   `drive_windows_installer.rb`) but none for the window, the welcome page, the
+   device page or the status views.
+5. **GSettings vs the port's settings store.** `lib/impression/settings.rb`
+   reproduces the keys and defaults, but no compiled gschema is installed, so
+   the values are not shared with anything else on the system that reads
+   upstream's schema.
 
-All widget types the port needs are present in the bindings — probed in the
-dev shell: every `Adwaita::*` and `Gtk::*` type named above resolves, and
-`Gtk::ListBox#remove_all` exists.
+## Notes for later steps
+
+- Upstream widget types absent from the port's scan are
+  `Gtk.ApplicationWindow`, `Gtk.CompositeTemplate` and `Gtk.Widget` — template
+  plumbing and a type reference, not components. Nothing in the widget stream
+  is actually unported.
+- `Gtk::VERSION` does not exist in these bindings; the constant is
+  `Gtk::Version` (`4.22.4` in this dev shell).
