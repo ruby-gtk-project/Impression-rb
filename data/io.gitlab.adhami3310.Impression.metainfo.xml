@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.gitlab.adhami3310.Impression</id>
+
+  <name>Impression</name>
+  <developer id="io.gitlab.adhami3310">
+    <name>Khaleel Al-Adhami</name>
+  </developer>
+  <summary>Create bootable drives</summary>
+
+  <metadata_license>CC-BY-SA-4.0</metadata_license>
+  <project_license>GPL-3.0</project_license>
+
+  <description>
+    <p>
+      Write disk images to your drives with ease. Select an image, insert your drive, and you're
+      good to go! Impression is a useful tool for both avid distro-hoppers and casual computer
+      users.
+    </p>
+  </description>
+
+  <keywords>
+    <keyword>usb</keyword>
+    <keyword>flash</keyword>
+    <keyword>writer</keyword>
+    <keyword>bootable</keyword>
+    <keyword>drive</keyword>
+    <keyword>iso</keyword>
+    <keyword>img</keyword>
+    <keyword>disk</keyword>
+    <keyword>image</keyword>
+    <keyword>media</keyword>
+    <keyword>creator</keyword>
+    <keyword>live</keyword>
+  </keywords>
+
+  <translation type="gettext">impression</translation>
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+
+  <supports>
+    <internet>offline-only</internet>
+  </supports>
+
+  <recommends>
+    <control>pointing</control>
+    <control>keyboard</control>
+    <control>touch</control>
+  </recommends>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://gitlab.com/adhami3310/Impression/-/raw/main/data/resources/screenshots/3.png</image>
+      <caption>Screen with a choice of a local image or internet download</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://gitlab.com/adhami3310/Impression/-/raw/main/data/resources/screenshots/0.png</image>
+      <caption>Screen with a chosen ISO and available USB memories</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://gitlab.com/adhami3310/Impression/-/raw/main/data/resources/screenshots/1.png</image>
+      <caption>Writing the ISO in progress</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://gitlab.com/adhami3310/Impression/-/raw/main/data/resources/screenshots/2.png</image>
+      <caption>Success screen with a big check mark</caption>
+    </screenshot>
+  </screenshots>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#ffb63f</color>
+    <color type="primary" scheme_preference="dark">#c54400</color>
+  </branding>
+
+  <launchable type="desktop-id">io.gitlab.adhami3310.Impression.desktop</launchable>
+
+  <url type="homepage">https://apps.gnome.org/Impression/</url>
+  <url type="donation">https://opencollective.com/impression</url>
+  <url type="bugtracker">https://gitlab.com/adhami3310/Impression/-/issues</url>
+  <url type="translate">https://gitlab.com/adhami3310/Impression/-/tree/main/po</url>
+  <url type="help">https://gitlab.com/adhami3310/Impression/-/issues</url>
+  <url type="vcs-browser">https://gitlab.com/adhami3310/Impression</url>
+  <url type="contribute">https://gitlab.com/adhami3310/Impression</url>
+  <url type="contact">https://matrix.to/#/@khaleela:gnome.org</url>
+
+  <update_contact>khaleel.aladhami@gmail.com</update_contact>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="3.8.0" date="2026-06-13">
+      <description translate="no">
+        <ul>
+          <li>Impression can now create bootable Windows installer USB drives from Windows ISO
+            files.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.7.0" date="2026-04-12">
+      <description translate="no">
+        <ul>
+          <li>Subscribes to file events instead of polling for changes.</li>
+          <li>Bump GNOME runtime to 50.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.6.0" date="2026-01-11">
+      <description translate="no">
+        <ul>
+          <li>Impression will now ask you where to save downloaded images instead of saving them to
+            a temporary location.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.6" date="2025-12-29">
+      <description translate="no">
+        <ul>
+          <li>Fix a bug where writing an image after downloading it would write nothing.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.5" date="2025-12-01">
+      <description translate="no">
+        <ul>
+          <li>Improve stability of the application and logging.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.4" date="2025-11-12">
+      <description translate="no">
+        <ul>
+          <li>Rewrite logic of parsing libosinfo to recover gracefully from errors.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.3" date="2025-10-26">
+      <description translate="no">
+        <ul>
+          <li>Fix a stack overflow.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.2" date="2025-10-26">
+      <description translate="no">
+        <ul>
+          <li>Add Catalan Translation.</li>
+          <li>Update Croatian Translation.</li>
+          <li>Fix a bug where the writing buffer might not flush correctly.</li>
+          <li>Move the list of downloadable distros to gsettings to be configurable via dconf.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.1" date="2025-09-01">
+      <description translate="no">
+        <ul>
+          <li>Add Dutch Translation.</li>
+          <li>Fixes a bug where the progress bar would update slowly when the app is not in focus.</li>
+          <li>Fixes a bug where the disk might unmount before the OS syncs all operations to disk.</li>
+        </ul>
+      </description>
+    </release>
+    <release version="3.5.0" date="2025-07-27">
+      <description translate="no">
+        <p>Fixes a bug where the order of the drives list would randomly change.</p>
+      </description>
+    </release>
+    <release version="3.4.0" date="2025-04-15">
+      <description translate="no">
+        <p>Update to GNOME 48 runtime and bug fixes.</p>
+        <ul>
+          <li>Fix cancel button not working as expected</li>
+          <li>Add variants to the list of available images</li>
+        </ul>
+        <p>
+          Volunteers have contributed Norwegian Bokmål, Polish, and Finnish translations. Thank you
+          for your contributions!
+        </p>
+      </description>
+    </release>
+    <release version="3.3.0" date="2024-09-20">
+      <description translate="no">
+        <p>Update to GNOME 47 runtime and bug fixes.</p>
+        <ul>
+          <li>Delete cache on start up to avoid build up.</li>
+          <li>Fix icon aliases</li>
+          <li>Fedora Workstation should be used over Silverblue.</li>
+        </ul>
+        <p>
+          Volunteers have contributed Simplified Chinese and Croatian translations. Thank you for
+          your contributions!
+        </p>
+      </description>
+    </release>
+    <release version="3.2.0" date="2024-04-15">
+      <description translate="no">
+        <p>This is a minor release of Impression to resolve missing icons issues and add Ubuntu LTS
+          to the list options.</p>
+      </description>
+    </release>
+    <release version="3.1.0" date="2024-03-13">
+      <description translate="no">
+        <p>This is a minor release of Impression with a few small improvements.</p>
+        <ul>
+          <li>Support for .xz files</li>
+          <li>Faster downloading of images</li>
+        </ul>
+        <p>Impression is made possible by volunteer developers, designers, and translators. Thank
+          you for your contributions!</p>
+      </description>
+    </release>
+    <release version="3.0.1" date="2023-11-07">
+      <description translate="no">
+        <p>This minor release fixes a bug where some .ISO files wouldn't be detected.</p>
+      </description>
+    </release>
+    <release version="3.0" date="2023-11-05">
+      <description translate="no">
+        <p>This release of Impression brings even more convenience and power to your fingertips:</p>
+        <ul>
+          <li>Direct download of a selection of images directly from the app</li>
+          <li>Updated and more understandable terminology</li>
+          <li>Security fixes</li>
+        </ul>
+        <p>Impression is made possible by volunteer developers, designers, and translators. Thank
+          you for your contributions!</p>
+      </description>
+    </release>
+    <release version="2.1" date="2023-06-20">
+      <description translate="no">
+        <p>This minor release of Impression delivers:</p>
+        <ul>
+          <li>Support for mobile screen sizes</li>
+          <li>Various bug fixes, improving reliability and stability</li>
+          <li>Brazillian Portugese translations, making Impression available in a total of 9
+            languages</li>
+        </ul>
+        <p>Impression is made possible by volunteer developers, designers, and translators. Thank
+          you for your contributions!</p>
+      </description>
+    </release>
+    <release version="2.0" date="2023-06-13">
+      <description translate="no">
+        <p>This major release of Impression brings a bunch of exciting improvements:</p>
+        <ul>
+          <li>Visual enhancements to make the app more beautiful, focused, and engaging</li>
+          <li>Automatic updates of the available drives list</li>
+          <li>Explicit drive selection before flashing, to avoid accidental data loss</li>
+          <li>Turkish and Czech translations, making Impression available in a total of 8 languages</li>
+        </ul>
+        <p>The versioning scheme has been simplified to only include major and minor versions. The
+          previous version of Impression was 1.0.1,
+          this is version 2.0. Going forward, new features and noticeable changes will be included
+          in
+          new major releases, while fixes and translations will result in new minor releases.</p>
+        <p>Impression is made possible by volunteer developers, designers, and translators. Thank
+          you for your contributions!</p>
+      </description>
+    </release>
+    <release version="1.0.1" date="2023-06-07">
+      <description translate="no">
+        <p>Added Spanish, French, German, Russian, and Italian translations.</p>
+      </description>
+    </release>
+    <release version="1.0.0" date="2023-06-03">
+      <description translate="no">
+        <p>Initial version.</p>
+      </description>
+    </release>
+  </releases>
+</component>

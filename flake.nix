@@ -195,6 +195,31 @@
               done
             fi
 
+            # The metadata files a desktop install needs: the desktop entry, the
+            # AppStream metainfo and the D-Bus service file. Upstream merges the
+            # translations into the first two with i18n.merge_file; msgfmt does
+            # the same merge from the catalogues in po/. The Exec lines name the
+            # wrapper this derivation installs, since neither a desktop entry
+            # launched by the shell nor a D-Bus activation has this prefix on
+            # PATH.
+            appId=io.gitlab.adhami3310.Impression
+            if [ -d data ] && [ -d po ]; then
+              install -d $out/share/applications $out/share/metainfo
+              ${pkgs.gettext}/bin/msgfmt --desktop -d po \
+                --template "data/$appId.desktop" \
+                -o "$out/share/applications/$appId.desktop"
+              sed -i "s|^Exec=${launcher} |Exec=$out/bin/${launcher} |" \
+                "$out/share/applications/$appId.desktop"
+              ${pkgs.gettext}/bin/msgfmt --xml -d po \
+                --template "data/$appId.metainfo.xml" \
+                -o "$out/share/metainfo/$appId.metainfo.xml"
+
+              install -d $out/share/dbus-1/services
+              sed "s|/usr/bin/${launcher} |$out/bin/${launcher} |" \
+                "data/$appId.service" \
+                > "$out/share/dbus-1/services/$appId.service"
+            fi
+
             # Compile any GSettings schema the port ships.
             if [ -d data/schemas ]; then
               mkdir -p $out/share/glib-2.0/schemas
@@ -273,6 +298,7 @@
             echo "run the app:   xvfb-run ruby exe/impression"
             echo "drive the app: xvfb-run ruby test/drive_*.rb"
             echo "translations:  rake locale, then LANGUAGE=de xvfb-run ruby exe/impression"
+            echo "metadata:      rake metadata (desktop entry, metainfo, D-Bus service)"
             echo "run the specs: ruby -e 'require \"rspec/core\"; exit RSpec::Core::Runner.run([\"--format\", \"progress\", \"--require\", \"spec_helper\", \"spec\"])'"
           '';
         };

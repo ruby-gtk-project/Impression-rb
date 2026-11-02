@@ -244,26 +244,22 @@ so About sets its fields directly.
 | `src/flash/wim.rs` | `lib/impression/wim.rb` | yes | WIM image size/split arithmetic |
 | `src/window.rs` `send_notification` | `lib/impression/notifier.rb` | yes | XDG notification portal; _("Image Written") / _("Failed to write image"), only when the window is inactive |
 | `po/` (24 languages, `impression.pot`) | `po/` + `lib/impression/i18n.rb` | yes | the same 24 catalogues; `i18n.rb` binds libintl through Fiddle and `rake locale` compiles the `.mo` files |
-| `data/…desktop.in.in`, `…metainfo.xml.in.in`, `…service.in` | — | **no** | desktop entry, AppStream metainfo and the D-Bus service file are not in the port |
+| `data/…desktop.in.in`, `…metainfo.xml.in.in`, `…service.in` | `data/io.gitlab.adhami3310.Impression.desktop`, `….metainfo.xml`, `….service` | yes | the three metadata files with meson's `@icon@` / `@app-id@` / `@gettext-package@` substituted; `rake metadata` and the flake's install phase merge the `po/` translations in with `msgfmt --desktop` / `--xml` the way `i18n.merge_file` does, and point both `Exec` lines at the installed wrapper. `:handles_open` on the application object is what makes `%u` and `--gapplication-service` work |
 
 ## Remaining gaps
 
-1. **Packaging data files.** No `.desktop`, no AppStream metainfo, no D-Bus
-   `.service`. Upstream's desktop entry carries `Exec=impression %u`,
-   `DBusActivatable=true`, the disk-image mime types and the keywords; the
-   metainfo is what upstream's About dialog reads through `from_appdata`.
-2. **The `devel` CSS class.** Upstream adds it to the window when
+1. **The `devel` CSS class.** Upstream adds it to the window when
    `PROFILE == "Devel"` and ships a separate `.Devel` icon (which the port does
    carry). The port has no profile split, so the striped dev header never
    appears.
-3. **The `dragoverlay` CSS name.** Upstream sets it in `class_init`; the port
+2. **The `dragoverlay` CSS name.** Upstream sets it in `class_init`; the port
    composes rather than subclasses, so the name is absent. Nothing in the
    stylesheet targets it, so this is cosmetic parity only.
-4. **No specs.** `spec/` is empty and the dev shell's spec runner has nothing
-   to run. `test/` holds two drive scripts (`drive_i18n.rb`,
-   `drive_windows_installer.rb`) but none for the window, the welcome page, the
-   device page or the status views.
-5. **GSettings vs the port's settings store.** `lib/impression/settings.rb`
+3. **No specs.** `spec/` is empty and the dev shell's spec runner has nothing
+   to run. `test/` holds three drive scripts (`drive_i18n.rb`,
+   `drive_windows_installer.rb`, `drive_metadata.rb`) but none for the window,
+   the welcome page, the device page or the status views.
+4. **GSettings vs the port's settings store.** `lib/impression/settings.rb`
    reproduces the keys and defaults, but no compiled gschema is installed, so
    the values are not shared with anything else on the system that reads
    upstream's schema.

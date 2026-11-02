@@ -3,4 +3,7 @@
 
 require "impression"
 
-Impression::Application.new.build.run
+# GApplication parses the argument list itself: it turns the paths into the
+# files the "open" signal carries and consumes its own options, such as the
+# --gapplication-service the D-Bus service file launches the app with.
+Impression::Application.new.build.run([$PROGRAM_NAME, *ARGV])

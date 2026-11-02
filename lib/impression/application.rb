@@ -38,12 +38,20 @@ module Impression
       app.tap do
         app.signal_connect("startup") { startup }
         app.signal_connect("activate") { activate }
+        app.signal_connect("open") { |_application, files, _hint| open(files) }
       end
     end
 
     # Adwaita::Application is broken in the Ruby bindings; the application
     # object comes from Gtk and only the window is Adwaita.
-    def app = @app ||= Gtk::Application.new(APP_ID, :default_flags)
+    #
+    # The flag is upstream's: HANDLES_OPEN makes GApplication deliver the files
+    # a launch carries through the "open" signal instead of leaving them in the
+    # argument list, which is what the desktop entry's DBusActivatable=true and
+    # the D-Bus service file's --gapplication-service both rely on — the flag
+    # also lets GApplication recognise that option itself rather than mistaking
+    # it for a path to open.
+    def app = @app ||= Gtk::Application.new(APP_ID, :handles_open)
 
     def settings = @settings ||= Settings.new
 
@@ -61,11 +69,15 @@ module Impression
         setup_accels
       end
 
-      # Upstream presents the window it already has, and opens whatever file it
-      # was handed; a launch from a shell brings the file along as an argument.
-      def activate
+      # Upstream's activate presents the window it already has.
+      def activate = window.present
+
+      # Upstream's open: the window is presented, then handed the first of the
+      # files the launch carried. Only a file with a local path can be read, so
+      # a remote URI is passed over rather than handed on as a nil path.
+      def open(files)
         window.present
-        ARGV.each { |path| window.open_path(File.expand_path(path)) }
+        files.filter_map(&:path).first(1).each { |path| window.open_path(path) }
       end
 
       def icon_theme = Gtk::IconTheme.get_for_display(Gdk::Display.default)

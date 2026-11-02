@@ -197,3 +197,37 @@ task("locale") do
     )
   end
 end
+
+### METADATA
+# Merges the translations in po/*.po into the desktop entry and the AppStream
+# metainfo, writing the localised files to tmp/metadata. Upstream does the same
+# merge with meson's i18n.merge_file; the flake's install phase does it again
+# for the packaged app, and this is the dev-shell equivalent. The D-Bus service
+# file carries no translatable field, so it is copied as it stands. Needs
+# msgfmt, which the dev shell carries.
+desc("Merge translations into the desktop entry and the metainfo in tmp/metadata")
+task("metadata") do
+  require "fileutils"
+
+  app_id = "io.gitlab.adhami3310.Impression"
+  target = File.join(__dir__, "tmp/metadata")
+  FileUtils.mkdir_p(target)
+
+  {
+    "--desktop" => "#{app_id}.desktop",
+    "--xml"     => "#{app_id}.metainfo.xml",
+  }.each do |mode, name|
+    sh(
+      "msgfmt",
+      mode,
+      "-d",
+      File.join(__dir__, "po"),
+      "--template",
+      File.join(__dir__, "data", name),
+      "-o",
+      File.join(target, name),
+    )
+  end
+
+  FileUtils.cp(File.join(__dir__, "data", "#{app_id}.service"), target)
+end
