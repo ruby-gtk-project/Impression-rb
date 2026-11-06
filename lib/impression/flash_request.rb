@@ -3,7 +3,7 @@
 require "fileutils"
 require "uri"
 
-require_relative "device_monitor"
+require_relative "udisks_bus"
 require_relative "flash_status"
 require_relative "online"
 require_relative "windows_installer"

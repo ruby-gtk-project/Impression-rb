@@ -2,7 +2,7 @@
 
 require "fileutils"
 
-require_relative "device_monitor"
+require_relative "udisks_bus"
 require_relative "flash_status"
 require_relative "udf"
 require_relative "wim"
