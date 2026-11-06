@@ -209,11 +209,15 @@ label), label composition `"{id_label} ({vendor} {model})"` falling back to
 `InterfacesAdded`/`InterfacesRemoved` subscription with a 500 ms debounce.
 
 → `lib/impression/device_row.rb` (the rows) and
-`lib/impression/device_monitor.rb` (UDisks + the debounce). **Present.** The
-bindings have no UDisks client and `GetManagedObjects`' `a{oa{sa{sv}}}` reply
-has no Ruby conversion, so the port enumerates through
-`org.freedesktop.DBus.Introspectable` and reads properties through
-`org.freedesktop.DBus.Properties` over `Gio::DBus`.
+`lib/impression/device_monitor.rb` (UDisks + the debounce). **Present, but
+stale.** `device_monitor.rb` still talks raw D-Bus through `Gio::DBus`
+(`org.freedesktop.DBus.Introspectable` + `.Properties`), with a comment
+saying "the Ruby bindings have no udisks client". That stopped being true in
+commit `a34fc07` ("Depend on the binding gems instead of working around
+them"): the gemspec now declares `udisks ~> 1.0`, the typelib is wired into
+`flake.nix`, and the gem loads in the dev shell. See **Remaining gaps** below
+— this is the hand-rolled code the accountability audit is looking for, and
+rewriting it is app code, out of scope for this survey.
 
 ## src/window.rs — dialogs
 
@@ -248,6 +252,17 @@ so About sets its fields directly.
 
 ## Remaining gaps
 
+0. **`device_monitor.rb` hand-rolls what the `udisks` gem now provides.**
+   The gemspec, `nix/Gemfile` and `flake.nix` were updated in `a34fc07` to
+   depend on and load the `udisks` gem (verified: `require "udisks"` loads in
+   the dev shell), but `lib/impression/device_monitor.rb` was not updated to
+   use it — it still enumerates and watches drives through raw
+   `org.freedesktop.DBus.Introspectable`/`.Properties` calls over `Gio::DBus`,
+   with a comment justifying that choice ("the Ruby bindings have no udisks
+   client") that is no longer accurate. This is the highest-priority item for
+   the next component-work step: replace the hand-rolled D-Bus client with
+   `UDisks::Client`/`UDisks::Object` and re-verify `device_row.rb` and
+   `app_window.rb`'s device-list wiring still work end to end.
 1. **The `devel` CSS class.** Upstream adds it to the window when
    `PROFILE == "Devel"` and ships a separate `.Devel` icon (which the port does
    carry). The port has no profile split, so the striped dev header never
