@@ -1,142 +1,155 @@
 # frozen_string_literal: true
 
-require "gtk4"
-
-require_relative "xml"
+require "gio2"
+require "glib2"
+require "udisks"
 
 module Impression
-  # Udisks is the bus plumbing the write pipeline (flash_request.rb,
+  # Udisks is the typed-gem plumbing the write pipeline (flash_request.rb,
   # windows_installer.rb) uses to drive UDisks2 directly: issuing method
-  # calls such as Format, Delete and OpenDevice, and reading properties
-  # mid-operation.
+  # calls such as Format, CreatePartitionAndFormat, Unmount, Rescan, Eject
+  # and OpenDevice, and reading properties mid-operation.
   #
-  # device_monitor.rb's own device listing goes through the `udisks` gem's
-  # typed UDisks::Client instead; this module is the lower-level raw D-Bus
-  # plumbing the write pipeline still needs for the method calls the gem's
-  # typed proxies also expose, but which have not been ported over yet.
-  # Properties go through org.freedesktop.DBus.Properties and object
-  # enumeration through org.freedesktop.DBus.Introspectable, because
-  # GetManagedObjects' reply type a{oa{sa{sv}}} has no Ruby conversion in
-  # plain Gio.
+  # This used to be raw org.freedesktop.DBus.Properties/.Introspectable calls
+  # through Gio::DBusProxy, on the theory that GetManagedObjects' reply type
+  # a{oa{sa{sv}}} has no Ruby conversion in plain Gio, and that building a
+  # UDisks::Client -- an inherently async operation -- is awkward from the
+  # write pipeline's own Ruby thread. Neither holds up: the typed client
+  # device_monitor.rb already builds (on the main thread, where
+  # UDisks::Client.new_for_connection's async callback fires naturally inside
+  # the GLib main loop GTK is already running) is the one this module shares
+  # -- set once by DeviceMonitor#connect_client -- so the write pipeline's own
+  # thread only ever makes plain blocking `call_*_sync` calls against it,
+  # which need no main loop of their own to complete, and reads the same
+  # object manager cache device_monitor.rb's device list already proves
+  # works for enumeration.
   module Udisks
-    SERVICE = "org.freedesktop.UDisks2"
-    MANAGER_PATH = "/org/freedesktop/UDisks2"
-    BLOCKS_PATH = "/org/freedesktop/UDisks2/block_devices"
+    # Raised by the `!` operations below when no UDisks2 client is connected
+    # at all (DeviceMonitor never reached setup_device_monitor's callback) or
+    # when path has no block device behind it any more -- distinct from a
+    # UDisks2 D-Bus error, which GLib::Error/Gio::Error already cover.
+    class Unavailable < StandardError; end
 
-    OBJECT_MANAGER_INTERFACE = "org.freedesktop.DBus.ObjectManager"
-    PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties"
-    INTROSPECTABLE_INTERFACE = "org.freedesktop.DBus.Introspectable"
-    BLOCK_INTERFACE = "org.freedesktop.UDisks2.Block"
-    DRIVE_INTERFACE = "org.freedesktop.UDisks2.Drive"
-    PARTITION_INTERFACE = "org.freedesktop.UDisks2.Partition"
-    PARTITION_TABLE_INTERFACE = "org.freedesktop.UDisks2.PartitionTable"
-    FILESYSTEM_INTERFACE = "org.freedesktop.UDisks2.Filesystem"
-
-    TIMEOUT = 5000
-
-    # Proxies are per (path, interface) and cheap to keep: a write re-reads the
-    # same handful of objects many times over.
-    def self.proxy(path, interface)
-      proxies[[path, interface]] ||= Gio::DBusProxy.new(
-        :system,
-        :do_not_load_properties,
-        nil,
-        SERVICE,
-        path,
-        interface,
-      )
-    end
-
-    def self.proxies = @proxies ||= {}
-
-    def self.object_manager = proxy(MANAGER_PATH, OBJECT_MANAGER_INTERFACE)
-
-    # UDisks2 may not be running at all, and a device can vanish between being
-    # listed and being asked about; upstream logs and carries on, and so does
-    # this.
-    def self.call(path, interface, method, parameters = nil)
-      proxy(path, interface).call_sync(
-        method,
-        parameters,
-        :none,
-        TIMEOUT,
-        nil,
-      )
-    rescue Gio::Error, GLib::Error => e
-      warn "UDisks2 #{method} on #{path} failed: #{message_of(e)}"
-      nil
-    end
-
-    # The same call, but failures are the caller's to handle — the write
-    # pipeline has to fail honestly rather than carry on.
-    def self.call!(path, interface, method, parameters = nil)
-      proxy(path, interface).call_sync(
-        method,
-        parameters,
-        :none,
-        TIMEOUT,
-        nil,
-      )
+    class << self
+      attr_accessor :client
     end
 
     def self.message_of(error) = error.message.lines.first.to_s.strip
 
-    # OpenDevice replies with a file descriptor rather than a path, which takes
-    # the fd-list form of the call. The reply's handle indexes that list.
-    def self.open_device(path, options)
-      values, fd_list = proxy(path, BLOCK_INTERFACE).call_with_unix_fd_list_sync(
-        "OpenDevice",
-        options,
-        :none,
-        TIMEOUT,
-        nil,
-        nil,
-      )
-      fd_list.get(values.first)
-    end
+    def self.object_at(path) = client&.object_manager&.get_object(path)
 
-    def self.property(path, interface, name)
-      call(
-        path,
-        PROPERTIES_INTERFACE,
-        "Get",
-        GLib::Variant.parse("('#{interface}', '#{name}')", "(ss)"),
-      )&.first
-    end
+    def self.block_at(path) = object_at(path)&.block
 
-    def self.block_paths
-      children_of(BLOCKS_PATH).map { |name| "#{BLOCKS_PATH}/#{name}" }
-    end
+    def self.filesystem_at(path) = object_at(path)&.filesystem
 
-    def self.interfaces_of(path)
-      introspect(path).each_child("interface").filter_map { |node| node["name"] }
-    end
-
-    def self.children_of(path)
-      introspect(path).each_child("node").filter_map { |node| node["name"] }
-    end
-
-    def self.introspect(path)
-      reply = call(path, INTROSPECTABLE_INTERFACE, "Introspect")
-      Xml.parse(reply.to_a.first.to_s) || Xml::Node.new("node", {})
-    end
-
-    # Every partition of a whole-disk block device, which is what udisks'
-    # client-side `partitions(&partition_table)` returns.
-    def self.partitions_of(path)
-      block_paths.select do |candidate|
-        property(candidate, PARTITION_INTERFACE, "Table") == path
-      end
-    end
-
-    # UDisks2 hands byte-array properties over NUL-terminated.
-    def self.byte_string(bytes)
-      case bytes
+    def self.partition_table_at(path)
+      block = block_at(path)
+      case block
       when nil
         nil
       else
-        bytes.take_while { |byte| byte.positive? }.pack("C*").force_encoding("UTF-8")
+        client.get_partition_table(block)
       end
     end
+
+    # Every partition of a whole-disk block device, by object path -- what
+    # upstream's `partitions(&partition_table)` returns, read off the object
+    # manager's own cache instead of walking /block_devices by hand.
+    def self.partitions_of(path)
+      case client
+      when nil
+        []
+      else
+        client.object_manager.objects
+          .select { |object| object.partition&.table == path }
+          .map(&:object_path)
+      end
+    end
+
+    # block_at(path), but for the operations below that cannot proceed
+    # without one: no silent nil, an explicit failure the write pipeline's
+    # own rescue reports like any other.
+    def self.block_at!(path)
+      block_at(path) || raise(Unavailable, "no UDisks2 block device at #{path}")
+    end
+
+    def self.size_of(path) = block_at(path)&.size.to_i
+
+    def self.mounted?(path) = !(filesystem_at(path)&.mount_points || []).empty?
+
+    def self.partition_table?(path) = !partition_table_at(path).nil?
+
+    # UDisks2 may not be running at all, and a device can vanish between being
+    # listed and being asked about; upstream logs and carries on, and so does
+    # this.
+    def self.unmount(path)
+      filesystem_at(path)&.call_unmount_sync(force_options, nil)
+    rescue GLib::Error, Gio::Error => e
+      warn "UDisks2 Unmount on #{path} failed: #{message_of(e)}"
+      nil
+    end
+
+    def self.rescan(path)
+      block_at(path)&.call_rescan_sync(empty_options, nil)
+    rescue GLib::Error, Gio::Error => e
+      warn "UDisks2 Rescan on #{path} failed: #{message_of(e)}"
+      nil
+    end
+
+    # Ejects path's drive, if it has one -- upstream ignores a block device
+    # with no drive (a loop device, say), exactly as this does.
+    def self.eject(path)
+      block = block_at(path)
+      drive = block.nil? ? nil : client.get_drive_for_block(block)
+      drive&.call_eject_sync(empty_options, nil)
+    rescue GLib::Error, Gio::Error => e
+      warn "UDisks2 Eject on #{path} failed: #{message_of(e)}"
+      nil
+    end
+
+    # OpenDevice replies with a file descriptor rather than a path, which the
+    # typed proxy exposes as a GUnixFDList and the handle indexing it. Failure
+    # is the caller's to handle -- the write pipeline has to fail honestly
+    # rather than carry on.
+    def self.open_device(path)
+      handle, fd_list = block_at!(path).call_open_device_sync(
+        "rw",
+        GLib::Variant.parse("{'flags': <int32 #{File::SYNC}>}", "a{sv}"),
+        nil,
+        nil,
+      )
+      fd_list.get(handle)
+    end
+
+    # The same call, but failures are the caller's to handle -- the write
+    # pipeline has to fail honestly rather than carry on.
+    def self.format_gpt!(path)
+      block_at!(path).call_format_sync("gpt", empty_options, nil)
+    end
+
+    # Wipes path to a GPT disk holding a single vfat partition of size bytes
+    # (0 means fill the drive), named volume, and answers the new partition's
+    # object path.
+    def self.create_partition_and_format!(path, size, volume)
+      table = partition_table_at(path) || raise(Unavailable, "no UDisks2 partition table at #{path}")
+      result = table.call_create_partition_and_format_sync(
+        0,
+        size,
+        "",
+        volume,
+        empty_options,
+        "vfat",
+        GLib::Variant.parse(
+          "{'label': <'#{volume}'>, 'update-partition-type': <true>}",
+          "a{sv}",
+        ),
+        nil,
+      )
+      result.is_a?(Array) ? result.first : result
+    end
+
+    def self.empty_options = GLib::Variant.parse("{}", "a{sv}")
+
+    def self.force_options = GLib::Variant.parse("{'force': <true>}", "a{sv}")
   end
 end

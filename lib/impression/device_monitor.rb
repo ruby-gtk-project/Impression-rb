@@ -4,6 +4,7 @@ require "gio2"
 require "udisks"
 
 require_relative "size_format"
+require_relative "udisks_bus"
 
 module Impression
   # Device is one removable drive's whole-disk block device, with the strings
@@ -77,6 +78,12 @@ module Impression
         connection = Gio.bus_get_sync(:system, nil)
         UDisks::Client.new_for_connection(connection, nil) do |client, _result, _user_data|
           @client = client
+          # The write pipeline (flash_request.rb, windows_installer.rb) drives
+          # UDisks2 through this same typed client, via udisks_bus.rb --
+          # built here, on the main thread, where this async constructor's
+          # callback can fire inside the GLib main loop GTK is already
+          # running.
+          Udisks.client = client
           block.call
         end
       rescue GLib::Error, Gio::Error => e

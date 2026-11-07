@@ -158,19 +158,31 @@ Two items: "Keyboard Shortcuts" (`win.show-help-overlay`), "About Impression"
 
 ## Gaps found
 
-None at the component level. The one documented, intentional seam is in
-`lib/impression/udisks_bus.rb`: device *enumeration* goes through the
-`udisks` gem's typed `UDisks::Client` (`device_monitor.rb`), but the write
-pipeline's direct method calls (Format, Delete, OpenDevice, etc., used by
-`flash_request.rb` and `windows_installer.rb`) still go over raw
-`Gio::DBusProxy`, with a comment explaining this is because
-`GetManagedObjects`'s `a{oa{sa{sv}}}` reply has no Ruby conversion in plain
-Gio and those typed calls haven't been ported from raw D-Bus to the gem's
-proxies yet. This is flagged here per the task's instructions as an existing,
-self-documented condition rather than a silent workaround — it is not a
-missing *component*, since no widget/page/dialog depends on it, but it is a
-spot where the mandatory-gem rule ("don't hand-roll what the gem provides")
-is only partially satisfied today.
+None at the component level. The previous pass through this report flagged
+one seam: `lib/impression/udisks_bus.rb`'s write-pipeline operations (Format,
+CreatePartitionAndFormat, Unmount, Rescan, Eject, OpenDevice, used by
+`flash_request.rb` and `windows_installer.rb`) went over raw `Gio::DBusProxy`
+rather than the `udisks` gem's typed `UDisks::Client`, on the stated theory
+that `GetManagedObjects`'s `a{oa{sa{sv}}}` reply has no Ruby conversion and
+that building an (inherently async) `UDisks::Client` from the write
+pipeline's own thread was impractical.
+
+This round fixed it: `udisks_bus.rb` is now entirely the typed client —
+`Unmount`/`Rescan`/`Eject`/`OpenDevice`/`Format`/`CreatePartitionAndFormat`
+are `call_*_sync` on the gem's generated `UDisks::Block`/`Filesystem`/
+`Drive`/`PartitionTable` proxies, and property reads (`Size`, mount points,
+partition-table presence) go through the same typed objects rather than raw
+`org.freedesktop.DBus.Properties`/`.Introspectable`. The reply-conversion
+objection doesn't hold: `UDisks::Client#object_manager` is exactly the thing
+`device_monitor.rb` already uses for enumeration. The threading objection is
+sidestepped rather than solved — `DeviceMonitor#connect_client` (main
+thread, where the GTK main loop already runs and the async constructor's
+callback fires naturally) now also publishes the client it builds to
+`Impression::Udisks.client`, and the write pipeline's own thread only ever
+makes blocking `call_*_sync` calls against that already-connected client, which
+need no main loop of their own to complete. `lib/impression/xml.rb`'s
+D-Bus Introspect parsing is no longer used by this module (it is still used
+by `online.rb` for the osinfo-db XML, so the file stays).
 
 ## Gem wiring check (per task instructions)
 

@@ -119,14 +119,7 @@ module Impression
       # Upstream ignores unmount failures: a partition that was never mounted
       # is not a reason to refuse to write.
       def unmount_partitions
-        Udisks.partitions_of(device_path).each do |partition|
-          Udisks.call(
-            partition,
-            Udisks::FILESYSTEM_INTERFACE,
-            "Unmount",
-            forced_options,
-          )
-        end
+        Udisks.partitions_of(device_path).each { |partition| Udisks.unmount(partition) }
       end
 
       # Upstream's prepared_source_path: a path on disk, whatever the source is.
@@ -215,13 +208,7 @@ module Impression
       # at a marginal stick, and so a sandboxed app needs no device permission
       # of its own.
       def open_device(path)
-        IO.for_fd(
-          Udisks.open_device(
-            path,
-            GLib::Variant.parse("('rw', {'flags': <int32 #{File::SYNC}>})", "(sa{sv})"),
-          ),
-          "r+b",
-        )
+        IO.for_fd(Udisks.open_device(path), "r+b")
       end
 
       # A flush or sync failure here means the drive dropped writes, typically a
@@ -245,33 +232,9 @@ module Impression
         target.fsync
       end
 
-      def rescan
-        Udisks.call(
-          device_path,
-          Udisks::BLOCK_INTERFACE,
-          "Rescan",
-          empty_options,
-        )
-      end
+      def rescan = Udisks.rescan(device_path)
 
-      def eject
-        drive = Udisks.property(device_path, Udisks::BLOCK_INTERFACE, "Drive")
-        case drive
-        when nil, "", "/"
-          nil
-        else
-          Udisks.call(
-            drive,
-            Udisks::DRIVE_INTERFACE,
-            "Eject",
-            empty_options,
-          )
-        end
-      end
-
-      def empty_options = GLib::Variant.parse("({},)", "(a{sv})")
-
-      def forced_options = GLib::Variant.parse("({'force': <true>},)", "(a{sv})")
+      def eject = Udisks.eject(device_path)
 
       def monotonic = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 

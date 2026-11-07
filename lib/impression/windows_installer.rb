@@ -18,15 +18,16 @@ module Impression
   # is not a Windows installer, leaving the drive untouched so the caller falls
   # back to a raw write.
   #
-  # Two things differ from upstream and only those two. Upstream formats and
-  # fills the staged image in-process with the `fatfs` crate, which has no Ruby
-  # counterpart, so the image file — still a plain unmounted file, built on
-  # local disk and then cloned to the stick in large sequential blocks exactly
-  # as upstream does it — is formatted with mkfs.vfat and filled with mcopy,
-  # the same way the port already decompresses with xzcat. And udisks exposes
-  # no partition-table signal through these bindings, so the wait for the table
-  # to appear after the GPT format polls the object's interfaces instead of
-  # watching InterfacesAdded.
+  # One thing differs from upstream. Upstream formats and fills the staged
+  # image in-process with the `fatfs` crate, which has no Ruby counterpart,
+  # so the image file — still a plain unmounted file, built on local disk and
+  # then cloned to the stick in large sequential blocks exactly as upstream
+  # does it — is formatted with mkfs.vfat and filled with mcopy, the same way
+  # the port already decompresses with xzcat. The wait for the partition
+  # table to appear after the GPT format polls the `udisks` gem's client (via
+  # udisks_bus.rb) rather than watching InterfacesAdded directly; the poll
+  # itself is upstream's own technique, just read off the typed client's
+  # object cache instead of a raw D-Bus Introspect.
   class WindowsInstaller
     # Raised for an installer build that failed on its own terms, as upstream's
     # WindowsInstallerFailed.
@@ -202,41 +203,21 @@ module Impression
       end
 
       def device_size
-        Udisks.property(request.device_path, Udisks::BLOCK_INTERFACE, "Size").to_i
+        Udisks.size_of(request.device_path)
       end
 
       # Wipes the destination to a GPT disk holding a single FAT32 partition of
       # size bytes (0 means fill the drive) and answers the new partition's
       # object path. The partition and the filesystem are both named label.
       def prepare_fat32_partition(volume, size)
-        Udisks.call!(
-          request.device_path,
-          Udisks::BLOCK_INTERFACE,
-          "Format",
-          GLib::Variant.parse("('gpt', {})", "(sa{sv})"),
-        )
+        Udisks.format_gpt!(request.device_path)
         wait_for_partition_table
-        Udisks.call!(
-          request.device_path,
-          Udisks::PARTITION_TABLE_INTERFACE,
-          "CreatePartitionAndFormat",
-          create_partition_arguments(volume, size),
-        ).to_a.first
-      end
-
-      # The label is sanitised to FAT's own alphabet before it gets here, so it
-      # carries nothing the variant text format would reinterpret.
-      def create_partition_arguments(volume, size)
-        GLib::Variant.parse(
-          "(0, #{size}, '', '#{volume}', {}, 'vfat', " \
-            "{'label': <'#{volume}'>, 'update-partition-type': <true>})",
-          "(ttssa{sv}sa{sv})",
-        )
+        Udisks.create_partition_and_format!(request.device_path, size, volume)
       end
 
       def wait_for_partition_table
         deadline = monotonic + SETTLE_TIMEOUT
-        until partition_table?
+        until Udisks.partition_table?(request.device_path)
           case monotonic >= deadline
           when true
             raise Failed, "udisks exposed no partition table on #{request.device_path}"
@@ -245,16 +226,12 @@ module Impression
         end
       end
 
-      def partition_table?
-        Udisks.interfaces_of(request.device_path).include?(Udisks::PARTITION_TABLE_INTERFACE)
-      end
-
       # Builds the filesystem into a partition-sized image on local disk, then
       # clones it onto the freshly prepared partition with the same copy the raw
       # write uses: mcopy's many tiny scattered metadata writes are slow sent
       # synchronously to a stick and free in the page cache on local disk.
       def stage_and_clone(partition, volume, content_total)
-        partition_size = Udisks.property(partition, Udisks::BLOCK_INTERFACE, "Size").to_i
+        partition_size = Udisks.size_of(partition)
         request.publish(FlashStatus.active(:build_image, Progress.pulse))
         build_fat_image(partition_size, volume, content_total)
         ensure_unmounted(partition)
@@ -306,23 +283,14 @@ module Impression
       # desktop automount race.
       def ensure_unmounted(partition)
         UNMOUNT_ATTEMPTS.times do
-          Udisks.call(
-            partition,
-            Udisks::FILESYSTEM_INTERFACE,
-            "Unmount",
-            GLib::Variant.parse("({'force': <true>},)", "(a{sv})"),
-          )
+          Udisks.unmount(partition)
           # Let a pending automount actually fire so it can be seen and undone.
           sleep(SETTLE_INTERVAL)
-          case mounted?(partition)
+          case Udisks.mounted?(partition)
           when false
             break
           end
         end
-      end
-
-      def mounted?(partition)
-        !Udisks.property(partition, Udisks::FILESYSTEM_INTERFACE, "MountPoints").to_a.empty?
       end
 
       # Runs one of the filesystem tools, failing loudly with whatever it said.
