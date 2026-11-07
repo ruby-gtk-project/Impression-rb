@@ -1,289 +1,185 @@
-# Impression — upstream component inventory
+# Impression-rb component inventory
 
-Upstream: `origin/main` in this repo (Rust / gtk-rs + libadwaita, one blueprint).
-Port: the `ruby` branch. Scanned with
-`.claude/skills/component-identification/scripts/component-scan.sh`.
+Surveyed against `origin/main` (gtk-rs/Vala-style Rust + blueprint upstream)
+on 2026-11-07. Upstream is small: one window class (`src/window.rs`), two
+custom widgets (`src/widgets/device_list.rs`, `src/widgets/drag_overlay.rs`),
+one application class (`src/application.rs`), one blueprint
+(`data/resources/blueprints/window.blp`) holding most of the UI tree, plus
+`src/online.rs` (distro metadata fetch) and the `src/flash/*` write pipeline
+(`mod.rs`, `udf.rs`, `wim.rs`, `windows_installer.rs`).
 
-Scan totals, as of this survey:
+**Overall finding: the `ruby` branch already has a component for every
+upstream source file and every named region of `window.blp`.** No missing
+component was found. This report records the mapping and the per-component
+widget/CSS/signal surface for the record, per the `component-identification`
+skill.
 
-| | widget rows | distinct types | CSS classes | signals | actions | controllers |
-|---|---:|---:|---:|---:|---:|---:|
-| upstream (`src/` + `data/`, 5 source files + 1 blueprint) | 52 | 33 | 18 | 7 | 8 | 2 |
-| port (`lib/`, 30 files) | 55 | 30 | 16 (+1 behind a constant) | 15 | 1 (+7 built in a loop) | 1 |
+## Application class
 
-The scan's `action` stream is unreliable on the port by design — `app.quit`
-comes from a literal, the four `win.*` actions come from a `action(name)`
-helper and the accelerators from the frozen `ACCELS` hash, so only one shows.
-Read `lib/impression/application.rb` and `lib/impression/app_window.rb#setup_actions`
-for the real set; both match upstream exactly (see below).
+### `src/application.rs` → `lib/impression/application.rb` — EXISTS
 
-The whole upstream UI is one blueprint, `data/resources/blueprints/window.blp`,
-bound to `src/window.rs` (996 lines) by `CompositeTemplate`. Those two files are
-one component *set*; the port splits them by page, because a single
-`app_window.rb` carrying all three stacks would be unreadable.
+- Kind: application class (actions, accelerators, main-window presentation).
+- Actions: `app.quit`.
+- Accelerators: `app.quit` (`<Control>q`), `win.close` (`<Control>w`),
+  `win.open` (`<Control>o`), `win.show-help-overlay` (`<Control>question`).
+- `open()` (file-open activation) hands the file to the window.
 
-House shape note: the port kept the kettle-jem gem skeleton
-(`lib/impression.rb` → `lib/impression/*.rb`, everything inside
-`module Impression`) rather than the pilot's flat `lib/<thing>.rb`. That is the
-decision in force; the targets below name the files that exist.
+## Window and its pages
 
-Every component below exists on `ruby`. What is left is listed under
-**Remaining gaps**.
+### `src/window.rs` + `data/resources/blueprints/window.blp` → `lib/impression/app_window.rb` — EXISTS
 
----
+The window file and its blueprint are one component (per
+`component-identification`'s file-union rule): the blueprint is the widget
+tree (`Stack main_stack`, `Adw.NavigationView navigation`, `toast_overlay`,
+`help_overlay`, `primary_menu`), the Rust file is the callbacks
+(`setup_gactions`, `cancel_request`, `flash`, `update_flashing_page`,
+`open_dialog`, `save_dialog`, `load_distros`, `show_about`,
+`setup_device_monitor`, `load_devices_into_ui`, window-size save/restore).
 
-## src/main.rs + src/application.rs — the application object
-
-| Widget | × | CSS | Signals/Actions | Notes |
+| Widget | × | CSS | Signals/actions | Notes |
 |---|---:|---|---|---|
-| `Adw.Application` | 1 | — | `activate`, `startup`, `open` | `HANDLES_OPEN`; `resource-base-path` |
-| `Gtk.Window.set_default_icon_name` | — | — | — | app id as icon name |
+| `Adw.ApplicationWindow` (template root) | 1 | `devel` (profile=Devel only — N/A in Ruby port, no profile build) | `close-request` | top-level |
+| `Gtk.Stack` (`main_stack`) | 1 | — | — | crossfade, pages `choose`/`status` |
+| `Adw.NavigationView` (`navigation`) | 1 | — | — | pages `welcome`/`device_list` |
+| `Adw.ToastOverlay` (`toast_overlay`) | 1 | — | — | "File is not a Disk Image" toast |
+| `Adw.ShortcutsDialog` (`help_overlay`) | 1 | — | `win.show-help-overlay` presents it | see shortcuts component below |
+| win actions | — | — | `win.close`, `win.about`, `win.show-help-overlay`, `win.open` | installed in `setup_gactions` |
+| `Gtk.DropTarget` | 1 | — | `drop` (file open) | wired to `DragOverlay` |
 
-Actions installed: `app.quit`.
-Accelerators set: `app.quit` `<Control>q`, `win.close` `<Control>w`,
-`win.open` `<Control>o`, `win.show-help-overlay` `<Control>question`.
-`main.rs` also does: gettext bind/textdomain, `set_application_name`,
-GResource load, and `get_size_string` (MiB under 1024, else GiB with 2 dp).
+Composite children (`welcome` page, `device_list` page, `status` stack pages,
+dialogs, menu) are each their own component below — this file's job is to
+own and wire them, matching the Ruby port's `app_window.rb`, which
+`require_relative`s all of them and does the same composition.
 
-→ `lib/impression/application.rb` (actions, `ACCELS`, open-file handling, icon
-search path, stylesheet install), `exe/impression` + `lib/impression.rb`
-(entry), `lib/impression/size_format.rb`. **Present.** The port uses
-`Gtk::Application` (the Adwaita one is unusable in these bindings) and loads
-`data/icons` through `Gtk::IconTheme` instead of a GResource bundle.
+## Composite components inside `window.blp` / `window.rs`
 
-## window.blp (`template $AppWindow`) + src/window.rs — the window shell
+### Welcome page (`Adw.NavigationPage tag="welcome"`) → `lib/impression/welcome_page.rb` — EXISTS
 
 | Widget | × | CSS | Signals | Notes |
 |---|---:|---|---|---|
-| `Adw.ApplicationWindow` | 1 | `devel` (only when `PROFILE == "Devel"`) | `close-request` | default 500×600, min 360×294, title "Impression" |
-| `Gtk.Stack main_stack` | 1 | — | — | crossfade; pages `choose` / `status` |
-| `Adw.ToastOverlay toast_overlay` | 1 | — | — | hosts the status stack |
-| `Adw.Toast` | 1 | — | — | _("File is not a Disk Image") on a bad drop/open |
-| `Gtk.DropTarget` (controller) | 1 | — | `drop` | `file-drop-target`, `COPY`, `GdkFileList`; handed to the DragOverlay |
+| `Adw.ToolbarView` + `Adw.HeaderBar` | 1 each | — | — | |
+| `Gtk.MenuButton` | 1 | — | menu-model = primary menu | |
+| `Adw.PreferencesPage` | 1 | — | — | |
+| `Adw.PreferencesGroup` | 3 | — | — | icon/title, open row, direct-download |
+| `Gtk.Image` (app icon) | 1 | `app_icon` | — | |
+| `Gtk.Label` (title) | 1 | `title`, `title-1` | — | |
+| `Adw.ActionRow` (`open_image_button`) | 1 | — | `activated` → `open_dialog` | |
+| `Gtk.Image` (`next_icon`) | 1 | — | — | activatable widget of the row |
+| `Gtk.DropDown` (`architecture`) | 1 | `architecture` | `notify::selected` → `on_architecture_changed` | x86_64/aarch64 |
+| `Gtk.Box` (`download_spinner`) | 1 | `card`, `loading-frame` | — | |
+| `Gtk.Spinner` | 1 | — | — | |
+| `Gtk.Box` (`offline_screen`) | 1 | `card` | — | |
+| `Adw.StatusPage` (offline) | 1 | `dim-label` | — | "No Connection" |
+| `Gtk.Box` (`distros`) | 1 | — | — | |
+| `Gtk.ListBox` (`amd_distros`, `arm_distros`) | 2 | `boxed-list` | — | populated via `DistroRow.load` |
+| `$DragOverlay` | 1 | — | — | see below |
 
-Actions installed on the window: `win.close`, `win.about`,
-`win.show-help-overlay`, `win.open`.
-Behaviour: `close-request` saves window size, and when a write is running it
-raises the "Stop Writing?" dialog and vetoes the close. State held:
-selected device object path, selected disk image (`Local{path,compression}` /
-`Online{url,download_path,name}`), available devices, `is_running`.
+### Distro row (`src/window.rs` `load_distros`) → `lib/impression/distro_row.rb` — EXISTS
 
-→ `lib/impression/app_window.rb` (492 lines) and
-`lib/impression/disk_image.rb` (the `Compression`/`DiskImage` pair).
-**Present.** `Adwaita::ApplicationWindow` does work here when it is handed the
-`Gtk::Application`. The `devel` CSS class is not reproduced — the port has no
-profile split.
+Repeater: one `Adw.ActionRow` per downloadable release (variable count).
 
-## window.blp — NavigationView, page `welcome` — the image chooser
+| Widget | × | CSS | Signals |
+|---|---:|---|---|
+| `Adw.ActionRow` | 1/release | — | `activated` → opens save dialog |
+| `Gtk.Image` (`go-next-symbolic`) | 1/release | — | activatable widget |
 
-| Widget | × | CSS | Signals | Notes |
-|---|---:|---|---|---|
-| `Adw.NavigationView navigation` | 1 | — | — | pages `welcome`, `device_list`; `push_by_tag("device_list")` |
-| `Adw.NavigationPage` | 1 | — | — | tag `welcome`, title _("Impression") |
-| `$DragOverlay drag_overlay` | 1 | — | — | title _("Drop Here to Open") |
-| `Adw.ToolbarView` + `Adw.HeaderBar` | 1+1 | — | — | — |
-| `Gtk.MenuButton` | 1 | — | — | `open-menu-symbolic`, `primary_menu`, tooltip _("Main Menu"), primary |
-| `Adw.PreferencesPage` | 1 | — | — | inside a vertical `Gtk.Box` (spacing 12) |
-| `Gtk.Image` (app icon) | 1 | `app_icon` | — | `io.gitlab.adhami3310.Impression`, 128px via CSS |
-| `Gtk.Label` | 1 | `title`, `title-1` | — | _("Choose Image") |
-| `Adw.ActionRow open_image_button` | 1 | — | `activated` → `open_dialog` | _("Open File…"), activatable widget = `next_icon`; **grabs focus** on window create and after Finish |
-| `Gtk.Image next_icon` | 1 | — | — | `go-next-symbolic` |
-| `Adw.PreferencesGroup` | 1 | — | — | title _("Direct Download") |
-| `Gtk.DropDown architecture` | 1 | `architecture` | `notify::selected` → `on_architecture_changed` | `Gtk.StringList` x86_64 / aarch64; insensitive until distros load |
-| `Gtk.Box download_spinner` | 1 | `card`, `loading-frame` | — | holds a 32×32 spinning `Gtk.Spinner` |
-| `Gtk.Box offline_screen` | 1 | `card` | — | hidden by default |
-| `Adw.StatusPage` (offline) | 1 | `dim-label` | — | _("No Connection") / _("Connect to the internet to view available images") |
-| `Gtk.Box distros` | 1 | — | — | hidden by default |
-| `Gtk.ListBox amd_distros` | 1 | `boxed-list` | — | selection none |
-| `Gtk.ListBox arm_distros` | 1 | `boxed-list` | — | selection none, hidden until aarch64 picked |
-| `Adw.ActionRow` (distro row) | **repeater** | — | `activated` → `save_dialog` | one per `DistroRelease`; title = name, subtitle = version, suffix `Gtk.Image go-next-symbolic` as activatable widget |
+### Device-list page (`Adw.NavigationPage tag="device_list"`) → `lib/impression/device_page.rb` — EXISTS
 
-Conditional/retry behaviour: a 10-second local timeout re-runs `get_distros`
-while the welcome page is showing and `offline_screen` is visible. An empty
-`downloadable-distros` setting clears both lists and hides spinner *and*
-offline screen.
+| Widget | × | CSS | Signals |
+|---|---:|---|---|
+| `Adw.ToolbarView` + `Adw.HeaderBar` + `Gtk.MenuButton` | 1 each | — | — |
+| `Adw.PreferencesPage`/`Group` | — | — | — |
+| `Gtk.Image` (optical-disc icon) | 1 | `dim-label` | — |
+| `Gtk.Label` (`name_value_label`) | 1 | `title-3` | — |
+| `Gtk.Label` (`size_label`) | 1 | `caption` | — |
+| `Adw.Clamp` | 1 | — | — | max 450 |
+| `Gtk.ListBox` (`available_devices_list`) | 1 | `boxed-list` | — | populated via `DeviceRow.load` |
+| `Gtk.Button` (`flash_button`) | 1 | `destructive-action`, `pill` | `clicked` → erase/flash dialog | starts disabled |
 
-→ `lib/impression/welcome_page.rb` (271 lines) + `lib/impression/distro_row.rb`.
-**Present.**
+### Device row (`src/widgets/device_list.rs` `fn new`) → `lib/impression/device_row.rb` — EXISTS
 
-## window.blp — NavigationView, page `device_list` — pick a drive
+Repeater: one row per device.
 
-| Widget | × | CSS | Signals | Notes |
-|---|---:|---|---|---|
-| `Adw.NavigationPage` | 1 | — | — | tag `device_list`, title _("Impression") |
-| `Adw.ToolbarView` + `Adw.HeaderBar` + `Gtk.MenuButton` | 1 each | — | — | same primary menu button as the welcome page |
-| `Adw.PreferencesPage` | 1 | — | — | `valign: center` |
-| `Gtk.Image` | 1 | `dim-label` | — | `media-optical-cd-symbolic`, 64px |
-| `Gtk.Label name_value_label` | 1 | `title-3` | — | image file name (or online image name), wrap word-char, 3 lines, 24 chars |
-| `Gtk.Label size_label` | 1 | `caption` | — | `get_size_string` of the local file; empty for online images |
-| `Adw.Clamp` | 1 | — | — | max 450, tightening 200 |
-| `Gtk.ListBox available_devices_list` | 1 | `boxed-list` | — | selection none; rebuilt from the device monitor |
-| `Adw.PreferencesGroup` | 1 | — | — | description _("All data on the selected drive will be erased") |
-| `Gtk.Button flash_button` | 1 | `destructive-action`, `pill` | `clicked` → `flash_dialog` | _("Write"); sensitive only while a device is selected |
+| Widget | × | CSS | Signals |
+|---|---:|---|---|
+| `Adw.ActionRow` | 1/device | — | — |
+| `Gtk.CheckButton` | 1/device | `selection_mode` | `toggled` | grouped so only one selects; lone device can't deselect |
 
-→ `lib/impression/device_page.rb`. **Present.**
+### Status stack (`Gtk.Stack stack`, inside `status` page) → `lib/impression/status_view.rb` — EXISTS
 
-## window.blp — `Gtk.Stack stack` under the toast overlay — the status views
+| Page | Widget | × | CSS | Signals |
+|---|---|---:|---|---|
+| `loading` | `Gtk.Spinner` | 1 | — | — |
+| `no_devices` | `Adw.StatusPage` | 1 | — | — |
+| `success` | `Adw.StatusPage` + `Gtk.Button` (`done_button`) | 1+1 | `suggested-action`,`pill` | `clicked`→`done_clicked` |
+| `failure` | `Adw.StatusPage`, `Adw.Clamp`, `Gtk.ScrolledWindow`, `Gtk.Label` (`error_message_label`), `Gtk.Button` (`try_again_button`) | — | `card`/`monospace`,`error-message`/`suggested-action`,`pill` | `clicked`→`try_again_clicked` |
+| `flashing` | `Adw.StatusPage` (`flashing_page`), `Gtk.ProgressBar`, `Gtk.Button` (`cancel_button`) | — | `pill` | `clicked`→`cancel_clicked` |
 
-One `Adw.ToolbarView` + `Adw.HeaderBar` + `Gtk.MenuButton` wrapper, then five
-stack pages (crossfade):
+### DragOverlay (`src/widgets/drag_overlay.rs`) → `lib/impression/drag_overlay.rb` — EXISTS
 
-| Page | Widget | CSS | Signals | Notes |
-|---|---|---|---|---|
-| `loading` | `Gtk.Spinner loading_spinner` | — | — | 28×28, centred |
-| `no_devices` | `Adw.StatusPage` | — | — | app icon, _("No Drives") / _("Insert a drive to write to") |
-| `success` | `Adw.StatusPage` | — | — | `check-round-outline-symbolic`, _("Writing Completed") / _("The drive can be safely removed") |
-| `success` | `Gtk.Button done_button` | `suggested-action`, `pill` | `clicked` → `done_clicked` | _("Finish"); clears devices, shows `no_devices`, refocuses Open File |
-| `failure` | `Adw.StatusPage` | — | — | `error-symbolic`, _("Writing Unsuccessful") |
-| `failure` | `Adw.Clamp` / `Gtk.ScrolledWindow` | `card` | — | max 600/400; min-content 100, max-content 200 |
-| `failure` | `Gtk.Label error_message_label` | `monospace`, `error-message` | — | the flash error text; hidden when empty |
-| `failure` | `Gtk.Button try_again_button` | `suggested-action`, `pill` | `clicked` → `try_again_clicked` | _("Retry") → back to `choose` |
-| `flashing` | `Adw.StatusPage flashing_page` | — | — | title/description/icon swapped per `FlashPhase` (see below) |
-| `flashing` | `Gtk.ProgressBar progress_bar` | — | — | `show-text`; `set_text(nil)` for a fraction, `""` + `pulse` for a pulse |
-| `flashing` | `Gtk.Button cancel_button` | `pill` | `clicked` → `cancel_clicked` | _("_Cancel"), underline |
+Custom `Adw.Bin` subclass: `Gtk.Overlay` + `Gtk.Revealer` (crossfade) +
+`Adw.StatusPage` (icon `document-send-symbolic`, css
+`drag-overlay-status-page`), reveal toggled by `drop-target`'s
+`current-drop-notify`. Properties `title`, `child`, `drop-target`.
 
-`FlashPhase` → page strings, all six: Download _("Downloading Image") /
-_("Writing will begin once the download is completed") /
-`folder-download-symbolic`; Extract _("Extracting Image") /
-_("Reading the source image") / `media-optical-cd-symbolic`; ProcessImage
-_("Processing Image") / _("Splitting the install image") /
-`media-optical-cd-symbolic`; Partition _("Partitioning Drive") /
-_("Do not remove the drive") / `usb-stick-symbolic`; BuildImage
-_("Preparing Installer Image") / _("Building the installer filesystem") /
-`flash-symbolic`; Copy _("Writing") / _("This could take a while") /
-`flash-symbolic`.
+### Dialogs (built in `src/window.rs` methods, not separate upstream files)
 
-A device change arriving while `flashing` / `failure` / `success` is visible
-must **not** navigate away — upstream guards this explicitly.
+| Upstream method | Port file | Exists |
+|---|---|---|
+| `open_dialog` (`Gtk.FileDialog`, open) | `lib/impression/open_dialog.rb` | yes |
+| `save_dialog` (`Gtk.FileDialog`, save) | `lib/impression/save_dialog.rb` | yes |
+| `flash_dialog` (`Adw.AlertDialog`, erase confirm) | `lib/impression/erase_dialog.rb` | yes |
+| `cancel_request` (`Adw.AlertDialog`, stop-writing confirm) | `lib/impression/stop_writing_dialog.rb` | yes |
+| `show_about` (`Adw.AboutDialog`) | `lib/impression/about_dialog.rb` | yes |
 
-→ `lib/impression/status_view.rb` (247 lines) +
-`lib/impression/flash_status.rb` (the phases and `Progress`). **Present.**
+### Shortcuts dialog (`Adw.ShortcutsDialog help_overlay` in `window.blp`) → `lib/impression/shortcuts_dialog.rb` — EXISTS
 
-## window.blp — `menu primary_menu`
+One section "General", three items: Open File (`win.open`), Show Shortcuts
+(`win.show-help-overlay`), Quit (`app.quit`).
 
-Two items in one section: _("Keyboard Shortcuts") → `win.show-help-overlay`,
-_("About Impression") → `win.about`. Used by all three header bars.
+### Primary menu (`menu primary_menu` in `window.blp`) → `lib/impression/primary_menu.rb` — EXISTS
 
-→ `lib/impression/primary_menu.rb`. **Present.**
+Two items: "Keyboard Shortcuts" (`win.show-help-overlay`), "About Impression"
+(`win.about`).
 
-## window.blp — `Adw.ShortcutsDialog help_overlay`
+## Non-widget upstream units (still ported)
 
-One `Adw.ShortcutsSection` C_("shortcut window", "General") with three
-`Adw.ShortcutsItem`: Open File → `win.open`, Show Shortcuts →
-`win.show-help-overlay`, Quit → `app.quit`. Presented by
-`win.show-help-overlay`.
-
-→ `lib/impression/shortcuts_dialog.rb`. **Present.**
-
-## src/widgets/drag_overlay.rs — drop target overlay
-
-| Widget | × | CSS | Signals | Notes |
-|---|---:|---|---|---|
-| `Adw.Bin` (subclass) | 1 | css **name** `dragoverlay` | — | properties `title`, `child`, `drop-target` |
-| `Gtk.Overlay` | 1 | — | — | parented directly to the bin; holds the real child |
-| `Gtk.Revealer` | 1 | — | — | crossfade, `can-target: false`, hidden |
-| `Adw.StatusPage` | 1 | `drag-overlay-status-page` | — | `document-send-symbolic`, title from the `title` property |
-| `Gtk.DropTarget` (controller) | 1 | — | `notify::current-drop` | reveals the overlay while a drop hovers; re-settable, old handler disconnected |
-
-→ `lib/impression/drag_overlay.rb`. **Present** as a composed object rather
-than a registered GObject subclass, so the `dragoverlay` CSS *name* is not
-reproduced (nothing in upstream's stylesheet targets it). `drop_target=` does
-not disconnect a previous handler, because the window sets it once.
-
-## src/widgets/device_list.rs — one row per writable drive
-
-| Widget | × | CSS | Signals | Notes |
-|---|---:|---|---|---|
-| `Adw.ActionRow` | **repeater** | — | — | title = drive label, subtitle = UDisks one-liner, activatable widget = its check button |
-| `Gtk.CheckButton` | **repeater** | `selection_mode` | `toggled` | `valign: center`, radio-grouped to the first; prefix of the row |
-
-Selection rules: all check buttons share the first one's group; with exactly
-one device the toggle re-asserts `active = true`; the previously selected
-device (matched by display string) stays selected, otherwise the first row is
-selected and `flash_button` becomes sensitive.
-
-Also in this file, not UI: UDisks2 enumeration (removable drives only, sorted
-by object path), `DeviceMetadata` (object, display string, one-liner info,
-label), label composition `"{id_label} ({vendor} {model})"` falling back to
-`"{vendor} {model}"`, and `monitor_devices` — an ObjectManager
-`InterfacesAdded`/`InterfacesRemoved` subscription with a 500 ms debounce.
-
-→ `lib/impression/device_row.rb` (the rows) and
-`lib/impression/device_monitor.rb` (UDisks + the debounce). **Present, but
-stale.** `device_monitor.rb` still talks raw D-Bus through `Gio::DBus`
-(`org.freedesktop.DBus.Introspectable` + `.Properties`), with a comment
-saying "the Ruby bindings have no udisks client". That stopped being true in
-commit `a34fc07` ("Depend on the binding gems instead of working around
-them"): the gemspec now declares `udisks ~> 1.0`, the typelib is wired into
-`flake.nix`, and the gem loads in the dev shell. See **Remaining gaps** below
-— this is the hand-rolled code the accountability audit is looking for, and
-rewriting it is app code, out of scope for this survey.
-
-## src/window.rs — dialogs
-
-| Component | Widget | Responses | Notes |
+| Upstream | Port file | Exists | Notes |
 |---|---|---|---|
-| Erase confirmation (`flash_dialog`) | `Adw.AlertDialog` | `cancel` _("_Cancel"), `erase` _("_Erase") destructive | _("Erase Drive?") / _("You will lose all data stored on {}") with the device display string; `erase` starts the flash |
-| Stop confirmation (`cancel_request`) | `Adw.AlertDialog` | `cancel` _("_Cancel"), `stop` _("_Stop Writing") destructive | _("Stop Writing?") / _("This might leave the drive in a faulty state"); closes the window when raised from `close-request`, else returns to `choose` |
-| Open image (`open_dialog`) | `Gtk.FileDialog` + `Gtk.FileFilter` | — | modal; mime `x-iso9660-image`, `x-raw-disk-image`, `x-cd-image`; patterns `*.iso *.img *.iso.xz *.img.xz *.raw.xz`; filter name _("Disk Images") |
-| Save download (`save_dialog`) | `Gtk.FileDialog` + `Gtk.FileFilter` | — | modal; patterns `*.img *.iso`; initial name = last URL segment or `disk-image.img` |
-| About (`show_about`) | `Adw.AboutDialog` | — | built `from_appdata` upstream; developers, designers, artists, translator-credits, acknowledgement _("Code borrowed from") Popsicle, and two other apps (Footage, Switcheroo) |
+| `src/online.rs` (distro metadata/osinfo-db fetch) | `lib/impression/online.rb`, `lib/impression/distro_release.rb`, `lib/impression/xml.rb` | yes | |
+| `src/flash/mod.rs` (write pipeline orchestration) | `lib/impression/flash_request.rb`, `lib/impression/flash_status.rb` | yes | |
+| `src/flash/udf.rs` (libudf FFI) | `lib/impression/udf.rb` | yes | |
+| `src/flash/wim.rs` (libwim FFI) | `lib/impression/wim.rb` | yes | |
+| `src/flash/windows_installer.rs` | `lib/impression/windows_installer.rb` | yes | |
+| `src/widgets/device_list.rs` (UDisks enumeration/monitor) | `lib/impression/device_monitor.rb` (uses `udisks` gem) + `lib/impression/device_row.rb` | yes | |
+| `data/io.gitlab.adhami3310.Impression.gschema.xml.in` (GSettings: `window-width`, `window-height`, `is-maximized`, `downloadable-distros`) | `lib/impression/settings.rb` | yes | |
+| `data/io.gitlab.adhami3310.Impression.metainfo.xml.in.in` (About dialog data: developers, designers, translator credits, related apps) | `lib/impression/about_dialog.rb` | yes | about_dialog.rb notes it sets the fields directly since there's no GResource bundle to read from |
+| `po/*.po` (translation catalogue) | `lib/impression/i18n.rb` | yes (gettext wiring present; `translation-parity` skill covers catalogue completeness, not scoped to this survey) | |
 
-→ `lib/impression/erase_dialog.rb`, `lib/impression/stop_writing_dialog.rb`,
-`lib/impression/open_dialog.rb`, `lib/impression/save_dialog.rb`,
-`lib/impression/about_dialog.rb`. **All present.** `from_appdata` is not bound,
-so About sets its fields directly.
+## Gaps found
 
-## Non-widget components the UI depends on
+None at the component level. The one documented, intentional seam is in
+`lib/impression/udisks_bus.rb`: device *enumeration* goes through the
+`udisks` gem's typed `UDisks::Client` (`device_monitor.rb`), but the write
+pipeline's direct method calls (Format, Delete, OpenDevice, etc., used by
+`flash_request.rb` and `windows_installer.rb`) still go over raw
+`Gio::DBusProxy`, with a comment explaining this is because
+`GetManagedObjects`'s `a{oa{sa{sv}}}` reply has no Ruby conversion in plain
+Gio and those typed calls haven't been ported from raw D-Bus to the gem's
+proxies yet. This is flagged here per the task's instructions as an existing,
+self-documented condition rather than a silent workaround — it is not a
+missing *component*, since no widget/page/dialog depends on it, but it is a
+spot where the mandatory-gem rule ("don't hand-roll what the gem provides")
+is only partially satisfied today.
 
-| Upstream | → port | Present | What it is |
-|---|---|---|---|
-| `data/io.gitlab.adhami3310.Impression.gschema.xml.in` | `lib/impression/settings.rb` | yes | `window-width` 500, `window-height` 600, `is-maximized` false, `downloadable-distros` `a(smsb)` with 7 defaults (archlinux.org, endlessos.com, fedoraproject.org/Silverblue inverted, manjaro.org, opensuse.org, ubuntu.com, ubuntu.com/LTS) |
-| `data/resources/style.css` | `lib/impression/style.rb` | yes | the same 6 rules, inline, installed at `PRIORITY_APPLICATION` |
-| `data/resources/resources.gresource.xml` + `icons/` | `data/icons/` + the icon search path in `lib/impression/application.rb` | yes | 7 bundled action icons and 4 app icons, as a hicolor tree instead of a GResource bundle |
-| `src/online.rs` | `lib/impression/online.rb`, `lib/impression/distro_release.rb`, `lib/impression/xml.rb` | yes | `db.libosinfo.org/latest.json` → osinfo-db tarball → XML parse → `DistroRelease{name, version, url, variant}`, filtered by must-contain/invert, prerelease dropped, releases within 2 years (or rolling). `xml.rb` is a hand-written reader because REXML is not in the runtime closure |
-| `src/flash/mod.rs` | `lib/impression/flash_request.rb`, `lib/impression/flash_status.rb` | yes | download with progress ticks, xz extract, unmount partitions, open the block device, copy with progress, rescan + eject, phases/`Progress`/cancellation |
-| `src/flash/windows_installer.rs` | `lib/impression/windows_installer.rb` | yes | the Windows-ISO path: partition, split oversized install.wim, build a FAT32 image |
-| `src/flash/udf.rs` | `lib/impression/udf.rb` | yes | UDF reader used to pull files out of a Windows ISO |
-| `src/flash/wim.rs` | `lib/impression/wim.rb` | yes | WIM image size/split arithmetic |
-| `src/window.rs` `send_notification` | `lib/impression/notifier.rb` | yes | XDG notification portal; _("Image Written") / _("Failed to write image"), only when the window is inactive |
-| `po/` (24 languages, `impression.pot`) | `po/` + `lib/impression/i18n.rb` | yes | the same 24 catalogues; `i18n.rb` binds libintl through Fiddle and `rake locale` compiles the `.mo` files |
-| `data/…desktop.in.in`, `…metainfo.xml.in.in`, `…service.in` | `data/io.gitlab.adhami3310.Impression.desktop`, `….metainfo.xml`, `….service` | yes | the three metadata files with meson's `@icon@` / `@app-id@` / `@gettext-package@` substituted; `rake metadata` and the flake's install phase merge the `po/` translations in with `msgfmt --desktop` / `--xml` the way `i18n.merge_file` does, and point both `Exec` lines at the installed wrapper. `:handles_open` on the application object is what makes `%u` and `--gapplication-service` work |
+## Gem wiring check (per task instructions)
 
-## Remaining gaps
-
-0. **`device_monitor.rb` hand-rolls what the `udisks` gem now provides.**
-   The gemspec, `nix/Gemfile` and `flake.nix` were updated in `a34fc07` to
-   depend on and load the `udisks` gem (verified: `require "udisks"` loads in
-   the dev shell), but `lib/impression/device_monitor.rb` was not updated to
-   use it — it still enumerates and watches drives through raw
-   `org.freedesktop.DBus.Introspectable`/`.Properties` calls over `Gio::DBus`,
-   with a comment justifying that choice ("the Ruby bindings have no udisks
-   client") that is no longer accurate. This is the highest-priority item for
-   the next component-work step: replace the hand-rolled D-Bus client with
-   `UDisks::Client`/`UDisks::Object` and re-verify `device_row.rb` and
-   `app_window.rb`'s device-list wiring still work end to end.
-1. **The `devel` CSS class.** Upstream adds it to the window when
-   `PROFILE == "Devel"` and ships a separate `.Devel` icon (which the port does
-   carry). The port has no profile split, so the striped dev header never
-   appears.
-2. **The `dragoverlay` CSS name.** Upstream sets it in `class_init`; the port
-   composes rather than subclasses, so the name is absent. Nothing in the
-   stylesheet targets it, so this is cosmetic parity only.
-3. **No specs.** `spec/` is empty and the dev shell's spec runner has nothing
-   to run. `test/` holds three drive scripts (`drive_i18n.rb`,
-   `drive_windows_installer.rb`, `drive_metadata.rb`) but none for the window,
-   the welcome page, the device page or the status views.
-4. **GSettings vs the port's settings store.** `lib/impression/settings.rb`
-   reproduces the keys and defaults, but no compiled gschema is installed, so
-   the values are not shared with anything else on the system that reads
-   upstream's schema.
-
-## Notes for later steps
-
-- Upstream widget types absent from the port's scan are
-  `Gtk.ApplicationWindow`, `Gtk.CompositeTemplate` and `Gtk.Widget` — template
-  plumbing and a type reference, not components. Nothing in the widget stream
-  is actually unported.
-- `Gtk::VERSION` does not exist in these bindings; the constant is
-  `Gtk::Version` (`4.22.4` in this dev shell).
+- `require "udisks"` is present (`lib/impression/device_monitor.rb:4`) and is
+  on a reachable, live code path (`App Window` → `setup_device_monitor` →
+  `DeviceMonitor` → `UDisks::Client.new_for_connection`), not merely required.
+- `impression-rb.gemspec` declares `spec.add_dependency("udisks", "~> 1.0")`.
+- `nix/Gemfile` lists `gem "udisks"`; `nix/Gemfile.lock` has `udisks (1.0.0)`
+  resolved.
+- `flake.nix` includes `udisks2` in the typelib/build-inputs stack
+  (`gtkStack`).
+- No gemspec dependency is left unused by `lib/`.
