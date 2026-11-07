@@ -84,6 +84,10 @@ end
 
 FakeFile = Struct.new(:path, :uri)
 
+# Stands in for the Gdk::FileList the drop target's "drop" signal hands
+# `dropped`, which only ever calls `.files` on it.
+FakeValue = Struct.new(:files)
+
 # flash_dialog pattern-matches the selected device against Impression::Device
 # itself, so the stand-in for a drive has to be one, not just something
 # shaped like one.
@@ -98,6 +102,33 @@ GtkDriver.drive(Impression::Application.new, shots: SHOTS, timeout: 60) do |d, a
     d.check("the open-file row has focus") { app.window.welcome.open_image_button.has_focus? }
     settle
     d.shot("01-welcome")
+  end
+
+  d.step("dialogs, menu and drag overlay are built with upstream's shape") do
+    open_dialog = app.window.open_dialog
+    d.check("open dialog is built, modal, with its filter installed as the default") do
+      open_dialog.dialog.modal? && open_dialog.dialog.default_filter.equal?(open_dialog.send(:filter))
+    end
+    d.check("open dialog filter carries upstream's 3 mime types and 5 patterns") do
+      Impression::OpenDialog::MIME_TYPES.length == 3 && Impression::OpenDialog::PATTERNS.length == 5
+    end
+
+    save_dialog = Impression::SaveDialog.new(release: Impression::DistroRelease.new(name: "Fedora", version: "41", url: "https://example.test/fedora-41-x86_64.iso")) { |_path| }
+    d.check("save dialog offers the release's own file name") { save_dialog.dialog.initial_name == "fedora-41-x86_64.iso" }
+    d.check("save dialog filter carries upstream's 2 patterns") { Impression::SaveDialog::PATTERNS.length == 2 }
+
+    menu_sections = app.window.menu_model.n_items
+    d.check("primary menu has one section") { menu_sections == 1 }
+
+    overlay = app.window.welcome.drag_overlay
+    d.check("drag overlay wraps the welcome page in a status-page overlay") { overlay.bin.child.equal?(overlay.overlay) }
+  end
+
+  d.step("dropping a file with the wrong extension through the drag overlay's drop target is refused") do
+    before = app.window.instance_variable_get(:@selected_image)
+    app.window.send(:dropped, FakeValue.new([FakeFile.new(BAD_EXTENSION_FILE, "file://#{BAD_EXTENSION_FILE}")]))
+    d.check("selection unchanged") { app.window.instance_variable_get(:@selected_image).equal?(before) }
+    d.check("still on the welcome page") { app.window.navigation.visible_page_tag == "welcome" }
   end
 
   d.step("welcome page: empty downloadable-distros list") do
@@ -140,8 +171,11 @@ GtkDriver.drive(Impression::Application.new, shots: SHOTS, timeout: 60) do |d, a
     d.shot("04-welcome-distros")
   end
 
-  d.step("shortcuts dialog opens and closes") do
-    app.window.shortcuts_dialog.present(app.window.window)
+  d.step("show-help-overlay action opens the shortcuts dialog") do
+    # Fired through the window's own GAction (setup_actions), the same path
+    # the primary menu's "Keyboard Shortcuts" item and the Ctrl+? accelerator
+    # take, rather than calling ShortcutsDialog directly.
+    app.window.window.activate_action("show-help-overlay", nil)
   end
 
   d.step("shortcuts dialog is the visible dialog") do
@@ -152,14 +186,15 @@ GtkDriver.drive(Impression::Application.new, shots: SHOTS, timeout: 60) do |d, a
     dialog&.close
   end
 
-  d.step("about dialog opens and closes") do
-    @about = Impression::AboutDialog.new.build
-    @about.present(app.window.window)
+  d.step("about action opens the about dialog") do
+    # Fired through the window's "about" GAction, the path the primary
+    # menu's "About Impression" item takes.
+    app.window.window.activate_action("about", nil)
   end
 
   d.step("about dialog is the visible dialog") do
     dialog = app.window.window.visible_dialog
-    d.check("about dialog is showing") { !dialog.nil? && dialog.equal?(@about) }
+    d.check("about dialog is showing") { !dialog.nil? }
     d.check("about dialog carries the app name") { dialog.application_name == "Impression" }
     settle
     d.shot("06-about")
@@ -266,6 +301,19 @@ GtkDriver.drive(Impression::Application.new, shots: SHOTS, timeout: 60) do |d, a
     d.check("an error message is present") { !app.window.status_view.send(:error_message_label).label.to_s.empty? }
     settle
     d.shot("12-failure")
+  end
+
+  d.step("notifier sends the failure notification exactly when the window is not the active one") do
+    # finish() just called notifier.notify for the failure above; here the
+    # same object is driven directly so the branch on Window#active? can be
+    # checked against what actually happened, in whichever direction the
+    # window manager (or lack of one, under xvfb) made true.
+    sent = []
+    app.app.define_singleton_method(:send_notification) { |id, notification| sent << [id, notification] }
+    app.window.send(:notifier).notify("test message")
+    d.check("send_notification called iff the window is inactive") do
+      app.window.window.active? ? sent.empty? : (sent.length == 1 && sent.first.first == Impression::Notifier::ID)
+    end
   end
 
   d.step("retry returns to the chooser") do
