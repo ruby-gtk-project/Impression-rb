@@ -38,7 +38,7 @@ tree (`Stack main_stack`, `Adw.NavigationView navigation`, `toast_overlay`,
 
 | Widget | × | CSS | Signals/actions | Notes |
 |---|---:|---|---|---|
-| `Adw.ApplicationWindow` (template root) | 1 | `devel` (profile=Devel only — N/A in Ruby port, no profile build) | `close-request` | top-level |
+| `Adw.ApplicationWindow` (template root) | 1 | `devel` — **gap**: no development-profile build exists in the port at all (see `.reports/component-identification.md` and `.reports/accountability-ensurance.md`) | `close-request` | top-level |
 | `Gtk.Stack` (`main_stack`) | 1 | — | — | crossfade, pages `choose`/`status` |
 | `Adw.NavigationView` (`navigation`) | 1 | — | — | pages `welcome`/`device_list` |
 | `Adw.ToastOverlay` (`toast_overlay`) | 1 | — | — | "File is not a Disk Image" toast |
@@ -158,7 +158,16 @@ Two items: "Keyboard Shortcuts" (`win.show-help-overlay`), "About Impression"
 
 ## Gaps found
 
-None at the component level. The previous pass through this report flagged
+**One, at the component level**, found by this audit and not by any earlier
+pass: the window template's `devel` CSS class (applied only when
+`PROFILE == "Devel"`, `src/window.rs:136`) has no port-side counterpart at
+all, because the port builds no development-profile variant whatsoever — no
+second `io.gitlab.adhami3310.Impression.Devel` app ID, no version suffix, no
+`devel` class in `lib/impression/style.rb`. See
+`.reports/component-identification.md` and
+`.reports/accountability-ensurance.md`.
+
+The previous pass through this report flagged
 one seam: `lib/impression/udisks_bus.rb`'s write-pipeline operations (Format,
 CreatePartitionAndFormat, Unmount, Rescan, Eject, OpenDevice, used by
 `flash_request.rb` and `windows_installer.rb`) went over raw `Gio::DBusProxy`
