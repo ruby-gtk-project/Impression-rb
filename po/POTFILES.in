@@ -1,5 +1,6 @@
 # The Ruby sources carrying translatable strings, in place of upstream's
 # blueprint and Rust list. `rake pot` extracts from exactly these.
+data/io.gitlab.adhami3310.Impression.gschema.xml.in
 lib/impression/about_dialog.rb
 lib/impression/app_window.rb
 lib/impression/device_page.rb

@@ -4,6 +4,7 @@ require "gtk4"
 require "adwaita"
 
 require_relative "app_window"
+require_relative "rb/version"
 require_relative "settings"
 require_relative "style"
 
@@ -22,7 +23,15 @@ module Impression
   # method, all configuration lives in its `tap`, assembly happens only in
   # `build`, and the launcher is one expression.
   class Application
-    APP_ID = "io.gitlab.adhami3310.Impression"
+    APP_ID_BASE = "io.gitlab.adhami3310.Impression"
+
+    # Upstream's meson.build: a development build (-Dprofile=development)
+    # appends ".Devel" to the application id and "-devel" to the version.
+    # Style.devel? reads the same IMPRESSION_PROFILE=Devel switch meson's
+    # build-time option stands in for here, since the port has no build step.
+    APP_ID = Style.devel? ? "#{APP_ID_BASE}.Devel" : APP_ID_BASE
+
+    VERSION = Rb::Version::VERSION + (Style.devel? ? "-devel" : "")
 
     ICON_PATH = File.expand_path("../../data/icons", __dir__)
 

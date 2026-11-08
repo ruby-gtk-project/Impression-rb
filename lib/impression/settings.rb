@@ -13,7 +13,9 @@ module Impression
   # installed into a glib-2.0/schemas directory before the app will even start.
   # Requiring an install step to run the port from a checkout is worse than the
   # alternative, so the keys are backed by a small JSON file under
-  # XDG_CONFIG_HOME instead.
+  # XDG_CONFIG_HOME instead. The schema's own <summary> strings are kept
+  # translatable in data/io.gitlab.adhami3310.Impression.gschema.xml.in,
+  # which this class otherwise never reads.
   class Settings
     # The schema's downloadable-distros default: (distro_id, must_include,
     # invert_must_include) triples.

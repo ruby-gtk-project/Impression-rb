@@ -20,8 +20,21 @@ rescue LoadError => error
 end
 
 # External RSpec & related config
-require "kettle/test/rspec"
-# `kettle/test/rspec` installs harness helpers documented in spec/README.md.
+begin
+  require "kettle/test/rspec"
+  # `kettle/test/rspec` installs harness helpers documented in spec/README.md.
+rescue LoadError => error
+  # The flake's devShell deliberately does not bundle the kettle-test/
+  # kettle-family stack (it is kettle-jem's own dev/release tooling, not a
+  # runtime dependency of the port) so the dev shell's own printed spec
+  # command -- `ruby -e '...RSpec::Core::Runner.run(...)'` -- can still run
+  # to completion instead of dying on this require before a single example
+  # loads. Outside that shell (the root Gemfile, CI), the gem is present and
+  # this branch never runs.
+  raise error unless error.message.include?("kettle")
+
+  warn "kettle-test/rspec not available (#{error.message}); running without its harness helpers."
+end
 
 # This library
 require "impression/rb"

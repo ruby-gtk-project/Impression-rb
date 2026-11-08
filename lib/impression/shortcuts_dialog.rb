@@ -16,6 +16,10 @@ module Impression
   class ShortcutsDialog < Adwaita::ShortcutsDialog
     include Gettext
 
+    # Upstream's blueprint marks every one of these four strings with
+    # `C_: "shortcut window"`, the ctx: form of a .blp translatable string.
+    CONTEXT = "shortcut window"
+
     SECTIONS = {
       "General" => [
         ["Open File", "<Control>o"],
@@ -41,13 +45,13 @@ module Impression
 
       def section(title, items)
         Adwaita::ShortcutsSection.new.tap do |section|
-          section.title = _(title)
+          section.title = C_(CONTEXT, title)
           items.each { |label, accelerator| section.add(item(label, accelerator)) }
         end
       end
 
       # Positional, not keyword, arguments — even though the error a no-argument
       # new raises advertises the signature as "title:, accelerator:".
-      def item(label, accelerator) = Adwaita::ShortcutsItem.new(_(label), accelerator)
+      def item(label, accelerator) = Adwaita::ShortcutsItem.new(C_(CONTEXT, label), accelerator)
   end
 end

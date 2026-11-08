@@ -100,6 +100,28 @@ module Impression
       setup
       Lib.gettext(text.to_s).to_s.force_encoding(Encoding::UTF_8)
     end
+
+    # glibc's gettext has no pgettext of its own; GNU gettext's own library
+    # (and every binding over it, including Rust's gettext-rs pgettext! that
+    # upstream's shortcuts dialog uses) implements context the same way: the
+    # context and the msgid are joined with EOT (\x04) into one lookup key
+    # that msgfmt compiles the .mo's msgctxt entries under, and the context
+    # prefix is stripped back off before the result is returned. Falling back
+    # to the bare msgid, as here, is exactly what an unmatched lookup already
+    # does one level up, in Lib.gettext itself.
+    CONTEXT_GLUE = "\x04"
+
+    def self.translate_with_context(context, text)
+      setup
+      key = "#{context}#{CONTEXT_GLUE}#{text}"
+      result = Lib.gettext(key).to_s.force_encoding(Encoding::UTF_8)
+      case result
+      when key
+        text.to_s
+      else
+        result
+      end
+    end
   end
 
   # Gettext gives a class the two shorthands the translated strings are marked
@@ -108,6 +130,11 @@ module Impression
     private
 
       def _(text) = I18n.translate(text)
+
+      # Upstream's gettext-rs pgettext!(context, msgid): the msgctxt-qualified
+      # lookup, for a string that is ambiguous on its own (as "General" is,
+      # outside the shortcuts window it names a section of).
+      def C_(context, text) = I18n.translate_with_context(context, text)
 
       # Marks a string for extraction without looking it up, for a table built
       # at load time whose strings are translated where they are shown.

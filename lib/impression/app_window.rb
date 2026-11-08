@@ -18,6 +18,7 @@ require_relative "primary_menu"
 require_relative "save_dialog"
 require_relative "settings"
 require_relative "shortcuts_dialog"
+require_relative "style"
 require_relative "status_view"
 require_relative "stop_writing_dialog"
 require_relative "welcome_page"
@@ -86,6 +87,7 @@ module Impression
 
         win.signal_connect("close-request") { close_requested }
 
+        Style.apply_profile(win)
         setup_actions
         setup_drop_target
         settings.apply_to(win)

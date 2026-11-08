@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Not read by the port at run time: lib/impression/settings.rb backs these
+  same four keys with a small JSON file instead of GSettings, since reading a
+  compiled schema would mean installing one into a glib-2.0/schemas directory
+  before the app could even start out of a checkout. This file exists only so
+  the four <summary> strings below -- which are translatable upstream, in
+  data/io.gitlab.adhami3310.Impression.gschema.xml.in -- have a home in the
+  port to be marked for extraction from (see po/POTFILES.in) and translated
+  from, matching upstream's catalogue key-for-key.
+-->
+<schemalist gettext-domain="impression">
+	<schema id="io.gitlab.adhami3310.Impression" path="/io/gitlab/adhami3310/Impression/">
+		<key name="window-width" type="i">
+			<default>500</default>
+			<summary>Window width</summary>
+		</key>
+		<key name="window-height" type="i">
+			<default>600</default>
+			<summary>Window height</summary>
+		</key>
+		<key name="is-maximized" type="b">
+			<default>false</default>
+			<summary>Window maximized state</summary>
+		</key>
+		<key name="downloadable-distros" type="a(smsb)">
+			<default>[
+				('archlinux.org', nothing, false), ('endlessos.com', nothing, false),
+				('fedoraproject.org', 'Silverblue', true), ('manjaro.org', nothing, false),
+				('opensuse.org', nothing, false), ('ubuntu.com', nothing, false),
+				('ubuntu.com', 'LTS', false)
+				]</default>
+			<summary>List of downloadable distros (distro_id, must_include, invert_must_include)
+				tuples</summary>
+		</key>
+	</schema>
+</schemalist>

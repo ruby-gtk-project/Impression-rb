@@ -50,7 +50,7 @@ the testing skill recommends.
   device list on every tick. It is stubbed to a no-op `start` for this run
   only; the device list itself is what the script drives by hand.
 
-## Not run: the RSpec suite
+## The RSpec harness: was broken, now runs (no examples yet)
 
 The dev shell banner's own spec command —
 
@@ -58,17 +58,28 @@ The dev shell banner's own spec command —
 ruby -e 'require "rspec/core"; exit RSpec::Core::Runner.run(["--format", "progress", "--require", "spec_helper", "spec"])'
 ```
 
-— fails before any example runs:
+**used to fail before any example ran.** This was a genuinely broken harness,
+not a cosmetic gap — a project's declared way of running its own tests did
+not work, which is a defect regardless of whether any example files existed
+yet behind it. Two separate bugs stacked on top of each other:
 
-```
-Failure/Error: require "kettle/test/rspec"
-LoadError: cannot load such file -- kettle/test/rspec
-```
+1. `spec/spec_helper.rb` unconditionally required `kettle/test/rspec`
+   (`LoadError: cannot load such file -- kettle/test/rspec`), from the
+   `kettle-test`/`kettle-family` gem stack that the root `Gemfile` pulls in
+   for kettle-jem's own dev/release tooling. The flake's devShell
+   deliberately does not bundle that stack into the packaged app's runtime
+   closure, and `bundle install` against the root Gemfile is not part of
+   this devShell either, so the require had no way to succeed there.
+2. Once that was fixed, a second, independent bug surfaced:
+   `spec/spec_helper.rb` also required `"impression/rb"`, a file that did
+   not exist (`lib/impression/rb/version.rb` existed; `lib/impression/rb.rb`
+   did not), so the require still failed.
 
-`spec/spec_helper.rb` requires the `kettle-test`/`kettle-family` gem stack
-that `Gemfile` pulls in, but the flake's devShell only adds the `rspec` gem
-itself, not that stack (and `bundle install` is not part of this devShell).
-This is pre-existing kettle-jem project scaffolding, unrelated to the Ruby
-GTK4 port: `spec/` holds no example files at all (`spec/spec_helper.rb` and
-`spec/README.md` only), so nothing is actually untested by this gap — there
-is no suite behind the harness yet, only the harness's own bootstrap.
+Both are now fixed: `spec_helper.rb` falls back gracefully when the
+kettle-test stack is absent (the same `rescue LoadError` pattern the
+SimpleCov block above it already uses), and `lib/impression/rb.rb` now
+exists. The command above now completes: `0 examples, 0 failures`. That
+number is accurate, not reassuring — `spec/` still holds no example files
+(`spec/spec_helper.rb` and `spec/README.md` only), so the harness is now
+able to run but there is still no suite behind it. That remains a real gap,
+just a different one than "the harness itself is broken."
