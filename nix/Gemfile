@@ -9,5 +9,6 @@
 source "https://rubygems.org"
 
 gem "adwaita"
+gem "glib2"
 gem "gtk4"
 gem "udisks"
